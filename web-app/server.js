@@ -1,9 +1,10 @@
 const crypto = require("crypto");
+const express = require("express");
 const fs = require("fs");
-const http = require("http");
 const path = require("path");
 
-const PORT = Number(process.env.PORT || 8080);
+const app = express();
+const PORT = Number(process.env.PORT || 10000);
 const DATA_FILE = process.env.DATA_FILE
   ? path.resolve(process.env.DATA_FILE)
   : path.join(__dirname, "data", "db.json");
@@ -15,6 +16,9 @@ const GATEWAY_DEFAULT_LAT = 10.776889;
 const GATEWAY_DEFAULT_LNG = 106.700806;
 const sessions = new Map();
 const registrationClaims = new Map();
+
+app.use(express.json({ limit: "1mb" }));
+app.use("/", express.static(PUBLIC_DIR));
 
 function defaultDb() {
   const now = new Date().toISOString();
@@ -108,6 +112,9 @@ function notFound(res) {
 }
 
 function readBody(req) {
+  if (req.body !== undefined) {
+    return Promise.resolve(req.body || {});
+  }
   return new Promise((resolve, reject) => {
     let body = "";
     req.on("data", (chunk) => {
@@ -339,7 +346,7 @@ function evaluateAlerts(db, user, reading) {
       userId: user.id,
       deviceId: reading.deviceId,
       type: "geofence",
-      message: `Bò ${reading.deviceId} đã vượt hàng rào ảo: ${Math.round(distanceFromFence)} m`,
+      message: `BÃ² ${reading.deviceId} Ä‘Ã£ vÆ°á»£t hÃ ng rÃ o áº£o: ${Math.round(distanceFromFence)} m`,
       createdAt: now,
       acknowledged: false
     });
@@ -351,7 +358,7 @@ function evaluateAlerts(db, user, reading) {
       userId: user.id,
       deviceId: reading.deviceId,
       type: "battery",
-      message: `Pin vòng cổ ${reading.deviceId} còn ${reading.battery}%`,
+      message: `Pin vÃ²ng cá»• ${reading.deviceId} cÃ²n ${reading.battery}%`,
       createdAt: now,
       acknowledged: false
     });
@@ -486,7 +493,7 @@ function runSimulation(db, user, scenario, body) {
     commands.push(...result.commands);
     return {
       status: 200,
-      payload: { ok: true, message: "Đã đặt lại dữ liệu mô phỏng", readings: [result.reading] },
+      payload: { ok: true, message: "ÄÃ£ Ä‘áº·t láº¡i dá»¯ liá»‡u mÃ´ phá»ng", readings: [result.reading] },
       commands
     };
   }
@@ -502,7 +509,7 @@ function runSimulation(db, user, scenario, body) {
     commands.push(...result.commands);
     return {
       status: 201,
-      payload: { ok: true, message: "Đã tạo điểm thời gian thực", readings: [result.reading] },
+      payload: { ok: true, message: "ÄÃ£ táº¡o Ä‘iá»ƒm thá»i gian thá»±c", readings: [result.reading] },
       commands
     };
   }
@@ -527,7 +534,7 @@ function runSimulation(db, user, scenario, body) {
     }
     return {
       status: 201,
-      payload: { ok: true, message: "Đã tạo 6 điểm lịch sử trong 3 giờ gần nhất", readings },
+      payload: { ok: true, message: "ÄÃ£ táº¡o 6 Ä‘iá»ƒm lá»‹ch sá»­ trong 3 giá» gáº§n nháº¥t", readings },
       commands
     };
   }
@@ -545,7 +552,7 @@ function runSimulation(db, user, scenario, body) {
     commands.push(...result.commands);
     return {
       status: 201,
-      payload: { ok: true, message: "Đã tạo tình huống vượt hàng rào ảo", readings: [result.reading] },
+      payload: { ok: true, message: "ÄÃ£ táº¡o tÃ¬nh huá»‘ng vÆ°á»£t hÃ ng rÃ o áº£o", readings: [result.reading] },
       commands
     };
   }
@@ -562,7 +569,7 @@ function runSimulation(db, user, scenario, body) {
     commands.push(...result.commands);
     return {
       status: 201,
-      payload: { ok: true, message: "Đã tạo tình huống pin yếu", readings: [result.reading] },
+      payload: { ok: true, message: "ÄÃ£ táº¡o tÃ¬nh huá»‘ng pin yáº¿u", readings: [result.reading] },
       commands
     };
   }
@@ -583,7 +590,7 @@ function runSimulation(db, user, scenario, body) {
     commands.push(...result.commands);
     return {
       status: 201,
-      payload: { ok: true, message: "Đã tạo lịch sử, vượt rào và pin yếu" },
+      payload: { ok: true, message: "ÄÃ£ táº¡o lá»‹ch sá»­, vÆ°á»£t rÃ o vÃ  pin yáº¿u" },
       commands
     };
   }
@@ -609,7 +616,7 @@ function registerDevice(db, body) {
       status: 409,
       payload: {
         error: "vong_co_da_thuoc_trang_trai_khac",
-        message: "Mã ID vòng cổ này đã được gắn với mã trang trại khác."
+        message: "MÃ£ ID vÃ²ng cá»• nÃ y Ä‘Ã£ Ä‘Æ°á»£c gáº¯n vá»›i mÃ£ trang tráº¡i khÃ¡c."
       }
     };
   }
@@ -643,7 +650,7 @@ function registerDevice(db, body) {
       status: 409,
       payload: {
         error: "ma_trang_trai_da_ton_tai",
-        message: "Mã trang trại này đã tồn tại. Hãy nhập mã khác hoặc bấm Tạo mã."
+        message: "MÃ£ trang tráº¡i nÃ y Ä‘Ã£ tá»“n táº¡i. HÃ£y nháº­p mÃ£ khÃ¡c hoáº·c báº¥m Táº¡o mÃ£."
       }
     };
   }
@@ -896,27 +903,17 @@ function serveStatic(req, res, pathname) {
   const safePath = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
   const filePath = path.normalize(path.join(PUBLIC_DIR, safePath));
   if (!filePath.startsWith(PUBLIC_DIR)) {
-    res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" });
-    res.end("Không có quyền truy cập");
+    res.status(403).type("text/plain; charset=utf-8").send("Khong co quyen truy cap");
     return;
   }
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-    res.end("Không tìm thấy");
+    res.status(404).type("text/plain; charset=utf-8").send("Khong tim thay");
     return;
   }
-  const ext = path.extname(filePath).toLowerCase();
-  const type = {
-    ".html": "text/html; charset=utf-8",
-    ".css": "text/css; charset=utf-8",
-    ".js": "application/javascript; charset=utf-8",
-    ".json": "application/json; charset=utf-8"
-  }[ext] || "application/octet-stream";
-  res.writeHead(200, { "Content-Type": type });
-  fs.createReadStream(filePath).pipe(res);
+  res.sendFile(filePath);
 }
 
-const server = http.createServer(async (req, res) => {
+app.use(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   try {
     if (url.pathname.startsWith("/api/")) {
@@ -930,6 +927,6 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Ung dung giam sat gia suc dang chay tai http://localhost:${PORT}`);
 });
