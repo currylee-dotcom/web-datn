@@ -9,7 +9,7 @@ const DATA_FILE = process.env.DATA_FILE
   ? path.resolve(process.env.DATA_FILE)
   : path.join(__dirname, "data", "db.json");
 const PUBLIC_DIR = path.join(__dirname, "public");
-const GATEWAY_TOKEN = process.env.IOT_GATEWAY_TOKEN || "dev-gateway-token";
+const GATEWAY_TOKEN = GATEWAY_TOKEN = "dev-gateway-token";
 const ADMIN_TOKEN = process.env.IOT_ADMIN_TOKEN || "dev-admin-token";
 const GATEWAY_COMMAND_URL = process.env.GATEWAY_COMMAND_URL || "";
 const GATEWAY_DEFAULT_LAT = 10.776889;
