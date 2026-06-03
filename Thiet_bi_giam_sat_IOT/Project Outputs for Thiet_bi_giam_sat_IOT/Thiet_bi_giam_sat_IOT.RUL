@@ -1,0 +1,5 @@
+DRC Rules Export File for PCB: G:\TAY_HO\THUC_TAP\DO_AN\81.NUOI_TRAU\Thiet_Bi_Giam_Sat_V2\Thiet_bi_giam_sat_IOT\Thiet_bi_giam_sat_IOT.PcbDoc
+RuleKind=SolderMaskExpansion|RuleName=SolderMaskExpansion|Scope=Board|Minimum=4.00
+RuleKind=Width|RuleName=Width|Scope=Board|Minimum=11.81
+RuleKind=Clearance|RuleName=Clearance|Scope=Board|Minimum=11.81
+RuleKind=ShortCircuit|RuleName=ShortCircuit|Scope=Board|Allowed=0

@@ -1,0 +1,49 @@
+{
+  "users": [
+    {
+      "id": "farm-888888",
+      "loginCode": "888888",
+      "name": "Trang trai 888888",
+      "phone": "+84000000000",
+      "devices": [
+        "B0:A1:C2:D3:E4:F5",
+        "B0:A1:C2:D3:E4:F6"
+      ],
+      "geofence": {
+        "lat": 10.776889,
+        "lng": 106.700806,
+        "radiusM": 500
+      }
+    }
+  ],
+  "gateways": [
+    {
+      "id": "gateway-888888",
+      "userId": "farm-888888",
+      "lat": 10.776889,
+      "lng": 106.700806,
+      "updatedAt": "2026-06-03T00:00:00.000Z"
+    }
+  ],
+  "readings": [
+    {
+      "id": "seed-reading-1",
+      "userId": "farm-888888",
+      "deviceId": "B0:A1:C2:D3:E4:F5",
+      "gatewayId": "gateway-888888",
+      "lat": 10.777203762562072,
+      "lng": 106.70121796057283,
+      "battery": 88,
+      "distanceM": 57.01,
+      "gatewayLat": 10.776889,
+      "gatewayLng": 106.700806,
+      "rssi": -88,
+      "snr": 8.5,
+      "seq": 1,
+      "fix": true,
+      "createdAt": "2026-06-03T00:00:00.000Z"
+    }
+  ],
+  "alerts": [],
+  "gatewayCommands": []
+}

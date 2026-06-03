@@ -1,0 +1,14 @@
+{
+  "name": "iot-cattle-collar-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Render-ready web app for LoRa GPS cattle collar monitoring.",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "check": "node --check server.js && node --check public/app.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

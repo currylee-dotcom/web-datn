@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: cattle-monitor-web
+    runtime: node
+    rootDir: web-app
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+      - key: IOT_GATEWAY_TOKEN
+        generateValue: true
+      - key: IOT_ADMIN_TOKEN
+        generateValue: true

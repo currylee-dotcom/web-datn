@@ -1,0 +1,13 @@
+Output: NC Drill Files
+Type  : NC Drill
+From  : Project [Thiet_bi_giam_sat_IOT.PrjPcb]
+   Generated File[Thiet_bi_giam_sat_IOT-RoundHoles.TXT]
+   Generated File[Thiet_bi_giam_sat_IOT-SlotHoles.TXT]
+   Generated File[Thiet_bi_giam_sat_IOT.LDP]
+   Generated File[Thiet_bi_giam_sat_IOT.DRR]
+
+
+Files Generated   : 4
+Documents Printed : 0
+
+Finished Output Generation At 12:50:56 PM On 5/31/2026

@@ -1,0 +1,3 @@
+Layer Pairs Export File for PCB: G:\TAY_HO\THUC_TAP\DO_AN\81.NUOI_TRAU\Thiet_Bi_Giam_Sat_V2\Thiet_bi_giam_sat_IOT\Thiet_bi_giam_sat_IOT.PcbDoc
+LayersSetName=Top_Bot_Thru_Holes|DrillFile=thiet_bi_giam_sat_iot-roundholes.txt|DrillLayers=gtl,gbl
+LayersSetName=Top_Bot_Slot_Holes|DrillFile=thiet_bi_giam_sat_iot-slotholes.txt|DrillLayers=gtl,gbl

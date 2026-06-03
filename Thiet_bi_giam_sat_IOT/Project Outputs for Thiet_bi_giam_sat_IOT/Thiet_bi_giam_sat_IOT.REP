@@ -1,0 +1,657 @@
+*************************************************************
+FileName = Thiet_bi_giam_sat_IOT.GBR
+AutoAperture = True
+*************************************************************
+Generating : Mechanical 72
+      File : Thiet_bi_giam_sat_IOT.GM72
+
+    Adding Layer      : Mechanical 72
+
+
+Used DCodes :
+    D145
+*************************************************************
+
+*************************************************************
+Generating : Mechanical 29
+      File : Thiet_bi_giam_sat_IOT.GM29
+
+    Adding Layer      : Mechanical 29
+
+
+Used DCodes :
+    D12
+    D16
+    D138
+    D143
+    D144
+*************************************************************
+
+*************************************************************
+Generating : Mechanical 20
+      File : Thiet_bi_giam_sat_IOT.GM20
+
+    Adding Layer      : Mechanical 20
+
+
+Used DCodes :
+    D139
+*************************************************************
+
+*************************************************************
+Generating : Bottom Component Center
+      File : Thiet_bi_giam_sat_IOT.GM18
+
+    Adding Layer      : Bottom Component Center
+
+
+Used DCodes :
+*************************************************************
+
+*************************************************************
+Generating : Top Component Center
+      File : Thiet_bi_giam_sat_IOT.GM17
+
+    Adding Layer      : Top Component Center
+
+
+Used DCodes :
+    D138
+*************************************************************
+
+*************************************************************
+Generating : Mechanical 15
+      File : Thiet_bi_giam_sat_IOT.GM15
+
+    Adding Layer      : Mechanical 15
+
+
+Used DCodes :
+    D16
+    D138
+    D141
+    D142
+*************************************************************
+
+*************************************************************
+Generating : Bottom Assembly
+      File : Thiet_bi_giam_sat_IOT.GM14
+
+    Adding Layer      : Bottom Assembly
+
+
+Used DCodes :
+*************************************************************
+
+*************************************************************
+Generating : Mechanical 13
+      File : Thiet_bi_giam_sat_IOT.GM13
+
+    Adding Layer      : Mechanical 13
+
+
+Used DCodes :
+    D12
+    D16
+    D139
+    D140
+*************************************************************
+
+*************************************************************
+Generating : Bottom Value
+      File : Thiet_bi_giam_sat_IOT.GM12
+
+    Adding Layer      : Bottom Value
+
+
+Used DCodes :
+*************************************************************
+
+*************************************************************
+Generating : Top Value
+      File : Thiet_bi_giam_sat_IOT.GM11
+
+    Adding Layer      : Top Value
+
+
+Used DCodes :
+    D139
+*************************************************************
+
+*************************************************************
+Generating : Bottom Component Outline
+      File : Thiet_bi_giam_sat_IOT.GM9
+
+    Adding Layer      : Bottom Component Outline
+
+
+Used DCodes :
+*************************************************************
+
+*************************************************************
+Generating : Bottom 3D Body
+      File : Thiet_bi_giam_sat_IOT.GM8
+
+    Adding Layer      : Bottom 3D Body
+
+
+Used DCodes :
+*************************************************************
+
+*************************************************************
+Generating : Top Component Outline
+      File : Thiet_bi_giam_sat_IOT.GM7
+
+    Adding Layer      : Top Component Outline
+
+
+Used DCodes :
+    D139
+*************************************************************
+
+*************************************************************
+Generating : Top 3D Body
+      File : Thiet_bi_giam_sat_IOT.GM6
+
+    Adding Layer      : Top 3D Body
+
+
+Used DCodes :
+*************************************************************
+
+*************************************************************
+Generating : Top Assembly
+      File : Thiet_bi_giam_sat_IOT.GM5
+
+    Adding Layer      : Top Assembly
+
+
+Used DCodes :
+    D139
+*************************************************************
+
+*************************************************************
+Generating : Bottom Courtyard
+      File : Thiet_bi_giam_sat_IOT.GM4
+
+    Adding Layer      : Bottom Courtyard
+
+
+Used DCodes :
+*************************************************************
+
+*************************************************************
+Generating : Top Courtyard
+      File : Thiet_bi_giam_sat_IOT.GM3
+
+    Adding Layer      : Top Courtyard
+
+
+Used DCodes :
+    D138
+    D139
+*************************************************************
+
+*************************************************************
+Generating : Mechanical 1
+      File : Thiet_bi_giam_sat_IOT.GM1
+
+    Adding Layer      : Mechanical 1
+
+
+Used DCodes :
+    D16
+*************************************************************
+
+*************************************************************
+Generating : Keep-Out Layer
+      File : Thiet_bi_giam_sat_IOT.GKO
+
+    Adding Layer      : Keep-Out Layer
+
+
+Used DCodes :
+    D10
+    D12
+*************************************************************
+
+*************************************************************
+Generating : Bottom Overlay
+      File : Thiet_bi_giam_sat_IOT.GBO
+
+    Adding Layer      : Bottom Overlay
+
+
+Used DCodes :
+*************************************************************
+
+*************************************************************
+Generating : Mechanical 2
+      File : Thiet_bi_giam_sat_IOT.GM2
+
+    Adding Layer      : Mechanical 2
+
+
+Used DCodes :
+    D138
+*************************************************************
+
+*************************************************************
+Generating : Bottom Paste
+      File : Thiet_bi_giam_sat_IOT.GBP
+
+    Adding Layer      : Bottom Paste
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+*************************************************************
+
+*************************************************************
+Generating : Bottom Solder
+      File : Thiet_bi_giam_sat_IOT.GBS
+
+    Adding Layer      : Bottom Solder
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D114
+    D115
+    D116
+    D117
+    D118
+    D119
+    D120
+    D121
+    D122
+    D123
+*************************************************************
+
+*************************************************************
+Generating : Top Solder
+      File : Thiet_bi_giam_sat_IOT.GTS
+
+    Adding Layer      : Top Solder
+
+    Adding Layer      : Top Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D18
+    D19
+    D20
+    D59
+    D68
+    D69
+    D70
+    D71
+    D72
+    D73
+    D74
+    D75
+    D76
+    D77
+    D78
+    D79
+    D80
+    D81
+    D82
+    D83
+    D84
+    D85
+    D86
+    D87
+    D88
+    D89
+    D90
+    D91
+    D92
+    D93
+    D94
+    D95
+    D96
+    D97
+    D98
+    D99
+    D100
+    D101
+    D102
+    D103
+    D104
+    D105
+    D106
+    D107
+    D108
+    D109
+    D110
+    D111
+    D112
+    D113
+    D114
+    D115
+    D116
+    D117
+    D118
+    D119
+    D120
+    D121
+    D122
+    D123
+*************************************************************
+
+*************************************************************
+Generating : Top Paste
+      File : Thiet_bi_giam_sat_IOT.GTP
+
+    Adding Layer      : Top Paste
+
+    Adding Layer      : Top Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D18
+    D19
+    D20
+    D21
+    D22
+    D23
+    D24
+    D25
+    D26
+    D27
+    D28
+    D29
+    D30
+    D31
+    D32
+    D33
+    D34
+    D35
+    D36
+    D37
+    D38
+    D39
+    D40
+    D41
+    D42
+    D43
+    D44
+    D45
+    D46
+    D47
+    D48
+    D49
+    D50
+    D51
+    D52
+    D53
+    D54
+    D55
+    D56
+    D57
+    D58
+    D59
+    D60
+    D61
+    D62
+    D63
+    D64
+    D65
+    D66
+    D67
+*************************************************************
+
+*************************************************************
+Generating : Top Overlay
+      File : Thiet_bi_giam_sat_IOT.GTO
+
+    Adding Layer      : Top Overlay
+
+
+Used DCodes :
+    D10
+    D11
+    D12
+    D13
+    D14
+    D15
+    D16
+    D17
+*************************************************************
+
+*************************************************************
+Generating : Top Pad Master
+      File : Thiet_bi_giam_sat_IOT.GPT
+
+    Adding Layer      : Top Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D18
+    D19
+    D20
+    D21
+    D22
+    D23
+    D24
+    D25
+    D26
+    D27
+    D28
+    D29
+    D30
+    D31
+    D32
+    D33
+    D34
+    D35
+    D36
+    D37
+    D38
+    D39
+    D40
+    D41
+    D42
+    D43
+    D44
+    D45
+    D46
+    D47
+    D48
+    D49
+    D50
+    D51
+    D52
+    D53
+    D54
+    D55
+    D56
+    D57
+    D58
+    D59
+    D60
+    D61
+    D62
+    D63
+    D64
+    D65
+    D66
+    D67
+    D124
+    D127
+    D128
+    D129
+    D130
+    D131
+    D132
+    D133
+    D134
+    D135
+*************************************************************
+
+*************************************************************
+Generating : Bottom Pad Master
+      File : Thiet_bi_giam_sat_IOT.GPB
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D127
+    D128
+    D129
+    D130
+    D131
+    D132
+    D133
+    D134
+    D135
+*************************************************************
+
+*************************************************************
+Generating : Bottom Layer
+      File : Thiet_bi_giam_sat_IOT.GBL
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D14
+    D125
+    D126
+    D127
+    D128
+    D129
+    D130
+    D131
+    D132
+    D133
+    D134
+    D135
+    D136
+    D137
+*************************************************************
+
+*************************************************************
+Generating : Top Layer
+      File : Thiet_bi_giam_sat_IOT.GTL
+
+    Adding Layer      : Top Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D11
+    D12
+    D14
+    D18
+    D19
+    D20
+    D21
+    D22
+    D23
+    D24
+    D25
+    D26
+    D27
+    D28
+    D29
+    D30
+    D31
+    D32
+    D33
+    D34
+    D35
+    D36
+    D37
+    D38
+    D39
+    D40
+    D41
+    D42
+    D43
+    D44
+    D45
+    D46
+    D47
+    D48
+    D49
+    D50
+    D51
+    D52
+    D53
+    D54
+    D55
+    D56
+    D57
+    D58
+    D59
+    D60
+    D61
+    D62
+    D63
+    D64
+    D65
+    D66
+    D67
+    D124
+    D125
+    D126
+    D127
+    D128
+    D129
+    D130
+    D131
+    D132
+    D133
+    D134
+    D135
+    D136
+    D137
+*************************************************************
+
+*************************************************************
+Generating : Drill Drawing
+      File : Thiet_bi_giam_sat_IOT.GD1
+
+    Adding Drill Pair : Top Layer-Bottom Layer
+
+    Adding Layer      : Drill Drawing
+
+
+Used DCodes :
+    D146
+    D147
+*************************************************************
+
+*************************************************************
+Generating : Drill Guide
+      File : Thiet_bi_giam_sat_IOT.GG1
+
+    Adding Drill Pair : Top Layer-Bottom Layer
+
+    Adding Layer      : Drill Guide
+
+
+Used DCodes :
+    D146
+*************************************************************
+

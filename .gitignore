@@ -1,0 +1,4 @@
+web-app/data/*.bak
+web-app/node_modules/
+firmware/.pio/
+firmware/.vscode/
