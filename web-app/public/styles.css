@@ -213,6 +213,7 @@ label {
 .content-grid {
   display: grid;
   grid-template-columns: 360px 1fr;
+  align-items: start;
   gap: 18px;
   max-width: 1440px;
   min-height: calc(100vh - 104px);
@@ -306,58 +307,193 @@ label {
 }
 
 .map-wrap {
+  position: relative;
+  align-self: start;
   width: 100%;
-  height: calc(100vh - 104px);
-  min-height: 560px;
+  height: min(72vh, 760px);
+  min-height: 540px;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #dfe8d9;
 }
 
-#map {
+#map,
+.fallback-map {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  min-height: 560px;
+  min-height: 540px;
 }
 
-.marker {
+.fallback-map {
+  overflow: hidden;
+  background:
+    linear-gradient(118deg, transparent 0 46%, rgba(230, 202, 121, 0.68) 46% 50%, transparent 50% 100%),
+    linear-gradient(22deg, rgba(75, 151, 184, 0.26) 0 14%, transparent 14% 100%),
+    linear-gradient(90deg, #8fc46e 0 26%, #e4c75f 26% 42%, #6faa62 42% 70%, #b7d4a4 70% 100%);
+}
+
+.fallback-map::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.24) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.24) 1px, transparent 1px);
+  background-size: 68px 68px;
+  opacity: 0.55;
+}
+
+.farm-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.map-marker,
+.leaflet-div-icon.map-marker {
+  width: 58px;
+  height: 64px;
+  border: 0;
+  background: transparent;
+}
+
+.fallback-marker {
+  position: absolute;
+  width: 58px;
+  height: 64px;
+  z-index: 4;
+  transform: translate(-50%, -86%);
   display: grid;
+  justify-items: center;
+  pointer-events: none;
+}
+
+.marker-badge {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 50% 50% 50% 10px;
+  transform: rotate(-45deg);
+  background: #ffffff;
+  border: 3px solid #2b362c;
+  box-shadow: 0 10px 22px rgba(20, 39, 20, 0.26);
+}
+
+.marker-badge svg {
   width: 34px;
   height: 34px;
-  place-items: center;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
-  color: #fff;
-  font-size: 14px;
+  transform: rotate(45deg);
+}
+
+.cow-marker .marker-badge {
+  border-color: #263126;
+}
+
+.gateway-marker .marker-badge {
+  border-color: var(--sky);
+}
+
+.marker-caption {
+  margin-top: 2px;
+  padding: 3px 7px;
+  max-width: 116px;
+  border-radius: 999px;
+  color: var(--soil);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--line);
+  font-size: 11px;
   font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 6px 14px rgba(38, 55, 32, 0.12);
 }
 
-.marker.gateway {
-  background: var(--sky);
+.distance-pill,
+.leaflet-distance-label {
+  pointer-events: none;
+  border: 0;
+  background: transparent;
 }
 
-.marker.cow {
-  background: var(--leaf);
+.distance-pill {
+  position: absolute;
+  z-index: 5;
+  transform: translate(-50%, -50%);
 }
 
-.marker.handle {
-  width: 20px;
-  height: 20px;
-  background: var(--amber);
+.distance-pill span,
+.leaflet-distance-label span {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  color: #ffffff;
+  background: #263126;
+  border: 2px solid rgba(255, 255, 255, 0.78);
+  border-radius: 999px;
+  box-shadow: 0 10px 24px rgba(17, 28, 16, 0.22);
+  font-weight: 900;
+  white-space: nowrap;
 }
 
-.distance-label {
+.history-point {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  z-index: 4;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 3px solid #ffffff;
+  background: #4e9bc0;
+  box-shadow: 0 6px 12px rgba(23, 74, 97, 0.2);
+}
+
+.history-point.latest {
+  width: 18px;
+  height: 18px;
+  background: #b96f3d;
+}
+
+.fallback-scale {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 5;
+  padding: 7px 10px;
+  color: var(--soil);
+  background: rgba(255, 255, 255, 0.9);
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
-  color: var(--soil);
   font-size: 12px;
-  font-weight: 900;
-  padding: 4px 8px;
-  white-space: nowrap;
+  font-weight: 800;
+  box-shadow: 0 8px 18px rgba(38, 55, 32, 0.1);
+}
+
+.fence-handle {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+}
+
+.leaflet-container {
+  font: inherit;
+  background: #ddebd6;
+}
+
+.leaflet-control-zoom a {
+  color: var(--soil);
 }
 
 .modal {
@@ -415,7 +551,8 @@ label {
   }
 
   .map-wrap,
-  #map {
+  #map,
+  .fallback-map {
     height: 520px;
     min-height: 520px;
   }
