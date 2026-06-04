@@ -92,9 +92,9 @@
         <section class="content-grid">
           <aside class="sidebar">
             <div class="tabs" role="tablist" aria-label="Chọn bản đồ">
-              <button id="realtimeTab" class="tab active" type="button">Real-time</button>
-              <button id="historyTab" class="tab" type="button">History</button>
-              <button id="geofenceTab" class="tab" type="button">Geofence</button>
+              <button id="realtimeTab" class="tab active" type="button">Bản đồ</button>
+              <button id="historyTab" class="tab" type="button">Lịch sử</button>
+              <button id="geofenceTab" class="tab" type="button">Hàng rào</button>
             </div>
 
             <section class="panel">
@@ -126,31 +126,13 @@
               <input id="radiusInput" type="range" min="20" max="5000" step="10" />
               <div class="radius-row">
                 <input id="radiusNumber" type="number" min="20" max="10000" step="10" />
-                <button id="saveFenceBtn" type="button">Lưu</button>
+                <button id="saveFenceBtn" type="button">Lưu bán kính</button>
               </div>
             </section>
 
             <section class="panel alerts-panel">
               <h2>Cảnh báo</h2>
               <div id="alertsList" class="alerts-list"></div>
-            </section>
-
-            <section class="panel commands-panel">
-              <h2>Lệnh Gateway</h2>
-              <div id="commandsList" class="commands-list"></div>
-            </section>
-
-            <section class="panel simulator-panel">
-              <h2>Kiểm thử nhanh</h2>
-              <div class="sim-grid">
-                <button id="simulateFullBtn" type="button">Đầy đủ</button>
-                <button id="simulateNormalBtn" type="button" class="ghost">Điểm mới</button>
-                <button id="simulateHistoryBtn" type="button" class="ghost">3 giờ</button>
-                <button id="simulateFenceBtn" type="button" class="ghost">Vượt rào</button>
-                <button id="simulateBatteryBtn" type="button" class="ghost">Pin yếu</button>
-                <button id="simulateResetBtn" type="button" class="ghost">Đặt lại</button>
-              </div>
-              <p id="simulateStatus" class="status-line" aria-live="polite"></p>
             </section>
           </aside>
 

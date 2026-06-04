@@ -14,6 +14,7 @@ const state = {
 
 const INVALID_COLLAR_ID_MESSAGE =
   "Mã ID không hợp lệ. Vui lòng nhập đúng định dạng MAC (VD: B0:A1:C2:D3:E4:F5)";
+const INVALID_FARM_CODE_MESSAGE = "Mã trang trại phải gồm 6 số";
 const COLLAR_MAC_PATTERN = /^[0-9A-F]{2}(:[0-9A-F]{2}){5}$/;
 
 const els = {
@@ -49,15 +50,7 @@ const els = {
   radiusInput: document.getElementById("radiusInput"),
   radiusNumber: document.getElementById("radiusNumber"),
   saveFenceBtn: document.getElementById("saveFenceBtn"),
-  alertsList: document.getElementById("alertsList"),
-  commandsList: document.getElementById("commandsList"),
-  simulateFullBtn: document.getElementById("simulateFullBtn"),
-  simulateNormalBtn: document.getElementById("simulateNormalBtn"),
-  simulateHistoryBtn: document.getElementById("simulateHistoryBtn"),
-  simulateFenceBtn: document.getElementById("simulateFenceBtn"),
-  simulateBatteryBtn: document.getElementById("simulateBatteryBtn"),
-  simulateResetBtn: document.getElementById("simulateResetBtn"),
-  simulateStatus: document.getElementById("simulateStatus")
+  alertsList: document.getElementById("alertsList")
 };
 
 function api(path, options = {}) {
@@ -71,7 +64,9 @@ function api(path, options = {}) {
   }).then(async (res) => {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw new Error(data.message || data.error || "yeu_cau_that_bai");
+      const error = new Error(data.message || data.error || "Yêu cầu thất bại");
+      error.code = data.error || "";
+      throw error;
     }
     return data;
   });
@@ -87,14 +82,7 @@ function normalizeDevice(value) {
 
 function messageFor(error) {
   const code = error && error.message ? error.message : String(error || "");
-  const messages = {
-    ma_vong_co_khong_hop_le: INVALID_COLLAR_ID_MESSAGE,
-    ma_trang_trai_phai_gom_6_so: "Mã trang trại phải gồm 6 số",
-    ma_trang_trai_da_ton_tai: "Mã trang trại này đã tồn tại. Hãy nhập mã khác hoặc bấm Tạo mã.",
-    vong_co_da_thuoc_trang_trai_khac: "Mã ID vòng cổ này đã được gắn với mã trang trại khác.",
-    yeu_cau_that_bai: "Yêu cầu thất bại"
-  };
-  return messages[code] || code || "Yêu cầu thất bại";
+  return code || "Yêu cầu thất bại";
 }
 
 function setCollarIdError(message = "") {
@@ -128,7 +116,16 @@ function showEntry(mode = "register", message = "") {
 function showApp() {
   els.entryView.hidden = true;
   els.appView.hidden = false;
-  setTimeout(() => state.map && state.map.invalidateSize(), 50);
+  invalidateMapSize(50);
+}
+
+function invalidateMapSize(delay = 200) {
+  setTimeout(() => {
+    const map = state.map;
+    if (map) {
+      map.invalidateSize();
+    }
+  }, delay);
 }
 
 function showRegisterSuccess(data) {
@@ -204,7 +201,7 @@ function selectedReading() {
 
 function updateHeader() {
   if (!state.user) return;
-  els.farmName.textContent = state.user.name || `Trang trai ${state.user.loginCode}`;
+  els.farmName.textContent = state.user.name || `Trang trại ${state.user.loginCode}`;
   els.farmCodeLabel.textContent = state.user.loginCode;
 }
 
@@ -237,6 +234,15 @@ function updateFenceInputs() {
   els.radiusNumber.value = Math.round(state.geofence.radiusM);
 }
 
+function gatewayCenter() {
+  const lat = Number(state.gateway?.lat ?? state.geofence?.lat ?? 10.776889);
+  const lng = Number(state.gateway?.lng ?? state.geofence?.lng ?? 106.700806);
+  return [
+    Number.isFinite(lat) ? lat : 10.776889,
+    Number.isFinite(lng) ? lng : 106.700806
+  ];
+}
+
 function destinationPoint(lat, lng, metersEast) {
   const earthRadiusM = 6371000;
   const dLng = (metersEast / (earthRadiusM * Math.cos((lat * Math.PI) / 180))) * (180 / Math.PI);
@@ -257,7 +263,7 @@ function drawFence() {
   clearLayer("fenceHandle");
   if (!state.map || !state.geofence) return;
 
-  const center = [state.geofence.lat, state.geofence.lng];
+  const center = gatewayCenter();
   state.layers.fenceCircle = L.circle(center, {
     radius: state.geofence.radiusM,
     color: "#2f6f4e",
@@ -268,22 +274,13 @@ function drawFence() {
   }).addTo(state.map);
 
   state.layers.fenceCenter = L.marker(center, {
-    draggable: state.mode === "geofence",
+    draggable: false,
     icon: markerIcon("gateway", "G")
   })
-    .bindPopup("Trạm thu Gateway")
+    .bindPopup("Trạm thu")
     .addTo(state.map);
 
-  state.layers.fenceCenter.on("drag", (event) => {
-    const pos = event.target.getLatLng();
-    state.geofence.lat = pos.lat;
-    state.geofence.lng = pos.lng;
-    state.layers.fenceCircle.setLatLng(pos);
-    state.layers.fenceHandle.setLatLng(destinationPoint(pos.lat, pos.lng, state.geofence.radiusM));
-  });
-  state.layers.fenceCenter.on("dragend", () => drawMode());
-
-  const handle = destinationPoint(state.geofence.lat, state.geofence.lng, state.geofence.radiusM);
+  const handle = destinationPoint(center[0], center[1], state.geofence.radiusM);
   state.layers.fenceHandle = L.marker(handle, {
     draggable: state.mode === "geofence",
     icon: handleIcon()
@@ -308,10 +305,8 @@ function drawRealtime() {
   state.layers.labels = labelGroup;
 
   const bounds = [];
-  const gateway = state.gateway || {
-    lat: state.geofence?.lat || 10.776889,
-    lng: state.geofence?.lng || 106.700806
-  };
+  const [gatewayLat, gatewayLng] = gatewayCenter();
+  const gateway = { lat: gatewayLat, lng: gatewayLng };
   bounds.push([gateway.lat, gateway.lng]);
 
   for (const reading of state.readings) {
@@ -360,7 +355,6 @@ async function drawHistory() {
   state.layers.history = group;
   const points = data.points.map((point) => [point.lat, point.lng]);
   if (points.length === 0) {
-    els.simulateStatus.textContent = "Chưa có điểm lịch sử trong 3 giờ gần nhất";
     return;
   }
 
@@ -403,32 +397,11 @@ async function refreshAlerts() {
     els.alertsList.appendChild(empty);
     return;
   }
-  for (const alert of data.alerts) {
-    const item = document.createElement("div");
-    item.className = `alert-item ${alert.type}`;
-    item.innerHTML = `<strong>${alert.message}</strong><span>${formatTime(alert.createdAt)}</span>`;
-    els.alertsList.appendChild(item);
-  }
-}
-
-async function refreshCommands() {
-  const data = await api("/api/commands");
-  els.commandsList.innerHTML = "";
-  if (data.commands.length === 0) {
-    const empty = document.createElement("p");
-    empty.className = "muted";
-    empty.textContent = "Không có lệnh chờ";
-    els.commandsList.appendChild(empty);
-    return;
-  }
-  for (const command of data.commands) {
-    const item = document.createElement("div");
-    item.className = "command-item";
-    item.innerHTML =
-      `<strong>${command.status}</strong>` +
-      `<span>${command.deviceId} · ${command.message}</span>`;
-    els.commandsList.appendChild(item);
-  }
+  const alert = data.alerts[0];
+  const item = document.createElement("div");
+  item.className = `alert-item ${alert.type}`;
+  item.innerHTML = `<strong>${alert.message}</strong><span>${formatTime(alert.createdAt)}</span>`;
+  els.alertsList.appendChild(item);
 }
 
 async function refreshData() {
@@ -440,7 +413,6 @@ async function refreshData() {
   updateFenceInputs();
   updateMetrics();
   await refreshAlerts();
-  await refreshCommands();
   await drawMode();
 }
 
@@ -485,22 +457,6 @@ async function bootstrap() {
   }
 }
 
-async function runSimulation(scenario, nextMode = state.mode) {
-  const deviceId = els.deviceSelect.value || state.user?.devices?.[0];
-  els.simulateStatus.textContent = "Đang tạo dữ liệu mô phỏng...";
-  try {
-    const data = await api(`/api/simulate/${scenario}`, {
-      method: "POST",
-      body: JSON.stringify({ deviceId })
-    });
-    state.mode = nextMode;
-    els.simulateStatus.textContent = data.message || "Đã tạo dữ liệu mô phỏng";
-    await refreshData();
-  } catch (err) {
-    els.simulateStatus.textContent = "Không tạo được dữ liệu mô phỏng";
-  }
-}
-
 function setRadius(value) {
   if (!state.geofence) return;
   const radius = Math.max(20, Math.min(10000, Number(value) || state.geofence.radiusM));
@@ -542,7 +498,7 @@ els.registerForm.addEventListener("submit", async (event) => {
   const farmCode = digitsOnly(els.registerFarmCode.value);
   const collarId = normalizeDevice(els.collarId.value);
   if (farmCode.length !== 6) {
-    els.registerMessage.textContent = messageFor("ma_trang_trai_phai_gom_6_so");
+    els.registerMessage.textContent = INVALID_FARM_CODE_MESSAGE;
     els.registerFarmCode.focus();
     return;
   }
@@ -561,7 +517,7 @@ els.registerForm.addEventListener("submit", async (event) => {
     showRegisterSuccess(data);
   } catch (err) {
     const message = messageFor(err);
-    if (err.message === "ma_vong_co_khong_hop_le") {
+    if (err.message === INVALID_COLLAR_ID_MESSAGE) {
       setCollarIdError(message);
       els.registerMessage.textContent = "";
       els.collarId.focus();
@@ -614,6 +570,7 @@ els.deviceSelect.addEventListener("change", async () => {
 
 els.realtimeTab.addEventListener("click", async () => {
   state.mode = "realtime";
+  invalidateMapSize(200);
   await refreshData();
 });
 
@@ -634,20 +591,12 @@ els.saveFenceBtn.addEventListener("click", async () => {
   if (!state.geofence) return;
   const data = await api("/api/geofence", {
     method: "PUT",
-    body: JSON.stringify(state.geofence)
+    body: JSON.stringify({ radiusM: state.geofence.radiusM })
   });
   state.geofence = data.geofence;
   state.gateway = data.gateway;
   updateFenceInputs();
   await drawMode();
-  els.simulateStatus.textContent = "Đã lưu hàng rào ảo";
 });
-
-els.simulateFullBtn.addEventListener("click", () => runSimulation("full", "realtime"));
-els.simulateNormalBtn.addEventListener("click", () => runSimulation("normal", "realtime"));
-els.simulateHistoryBtn.addEventListener("click", () => runSimulation("history", "history"));
-els.simulateFenceBtn.addEventListener("click", () => runSimulation("geofence", "realtime"));
-els.simulateBatteryBtn.addEventListener("click", () => runSimulation("battery", "realtime"));
-els.simulateResetBtn.addEventListener("click", () => runSimulation("reset", "realtime"));
 
 bootstrap();

@@ -274,14 +274,12 @@ label {
   line-height: 1.4;
 }
 
-.alerts-list,
-.commands-list {
+.alerts-list {
   display: grid;
   gap: 8px;
 }
 
-.alert-item,
-.command-item {
+.alert-item {
   border-radius: 8px;
   padding: 10px 12px;
 }
@@ -296,41 +294,20 @@ label {
   background: var(--danger-soft);
 }
 
-.command-item {
-  border: 1px solid var(--line);
-  background: #fbfcf8;
-}
-
-.alert-item strong,
-.command-item strong {
+.alert-item strong {
   display: block;
   font-size: 13px;
 }
 
-.alert-item span,
-.command-item span {
+.alert-item span {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.4;
 }
 
-.simulator-panel {
-  display: grid;
-  gap: 10px;
-}
-
-.sim-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.sim-grid button {
-  min-width: 0;
-  padding: 0 10px;
-}
-
 .map-wrap {
+  width: 100%;
+  height: calc(100vh - 104px);
   min-height: 560px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -341,7 +318,7 @@ label {
 #map {
   width: 100%;
   height: 100%;
-  min-height: calc(100vh - 104px);
+  min-height: 560px;
 }
 
 .marker {
@@ -439,6 +416,7 @@ label {
 
   .map-wrap,
   #map {
+    height: 520px;
     min-height: 520px;
   }
 }

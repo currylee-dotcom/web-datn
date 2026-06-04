@@ -27,7 +27,7 @@ function defaultDb() {
       {
         id: "farm-888888",
         loginCode: "888888",
-        name: "Trang trai 888888",
+        name: "Trang trại 888888",
         phone: "+84000000000",
         devices: ["B0:A1:C2:D3:E4:F5", "B0:A1:C2:D3:E4:F6"],
         geofence: {
@@ -76,7 +76,7 @@ function migrateDb(db) {
       user.loginCode = randomFarmCode(db);
     }
     user.id = user.id || `farm-${user.loginCode}`;
-    user.name = user.name || `Trang trai ${user.loginCode}`;
+    user.name = user.name || `Trang trại ${user.loginCode}`;
     user.phone = user.phone || "";
     user.devices = Array.isArray(user.devices) ? Array.from(new Set(user.devices.map(normalizeDeviceId))) : [];
     user.geofence = {
@@ -108,7 +108,7 @@ function sendJson(res, status, payload) {
 }
 
 function notFound(res) {
-  sendJson(res, 404, { error: "khong_tim_thay" });
+  sendJson(res, 404, { error: "Không tìm thấy" });
 }
 
 function readBody(req) {
@@ -120,7 +120,7 @@ function readBody(req) {
     req.on("data", (chunk) => {
       body += chunk;
       if (body.length > 1024 * 1024) {
-        reject(new Error("du_lieu_gui_len_qua_lon"));
+        reject(new Error("Dữ liệu gửi lên quá lớn"));
         req.destroy();
       }
     });
@@ -132,7 +132,7 @@ function readBody(req) {
       try {
         resolve(JSON.parse(body));
       } catch (err) {
-        reject(new Error("json_khong_hop_le"));
+        reject(new Error("JSON không hợp lệ"));
       }
     });
   });
@@ -187,7 +187,7 @@ function randomFarmCode(db) {
     const code = String(crypto.randomInt(0, 1000000)).padStart(6, "0");
     if (!used.has(code)) return code;
   }
-  throw new Error("khong_tao_duoc_ma_trang_trai");
+  throw new Error("Không tạo được mã trang trại");
 }
 
 function publicUser(user) {
@@ -234,6 +234,23 @@ function ensureGateway(db, user, gatewayId = `gateway-${user.loginCode}`) {
   return gateway;
 }
 
+function gatewayCoordinatesForUser(db, user) {
+  const gateway = userGateway(db, user.id);
+  return {
+    lat: toNumber(gateway?.lat, toNumber(user.geofence?.lat, GATEWAY_DEFAULT_LAT)),
+    lng: toNumber(gateway?.lng, toNumber(user.geofence?.lng, GATEWAY_DEFAULT_LNG))
+  };
+}
+
+function geofenceForUser(db, user) {
+  const center = gatewayCoordinatesForUser(db, user);
+  return {
+    lat: center.lat,
+    lng: center.lng,
+    radiusM: clamp(toNumber(user.geofence?.radiusM, 500), 20, 10000)
+  };
+}
+
 function latestReadingsForUser(db, user) {
   const latest = new Map();
   for (const reading of db.readings) {
@@ -263,22 +280,13 @@ function haversineMeters(lat1, lng1, lat2, lng2) {
   return earthRadiusM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function pointFrom(centerLat, centerLng, metersNorth, metersEast) {
-  const earthRadiusM = 6371000;
-  const lat = centerLat + (metersNorth / earthRadiusM) * (180 / Math.PI);
-  const lng =
-    centerLng +
-    (metersEast / (earthRadiusM * Math.cos((centerLat * Math.PI) / 180))) * (180 / Math.PI);
-  return { lat, lng };
-}
-
 function normalizeIngest(body) {
   const deviceId = normalizeDeviceId(body.deviceId || body.macAddress || body.mac || body.collarId);
   const gatewayId = normalizeDeviceId(body.gatewayId || "gateway-888888").toLowerCase();
   const lat = toNumber(body.lat ?? body.latitude, NaN);
   const lng = toNumber(body.lng ?? body.longitude, NaN);
-  const gatewayLat = toNumber(body.gatewayLat, NaN);
-  const gatewayLng = toNumber(body.gatewayLng, NaN);
+  const gatewayLat = toNumber(body.gatewayLat ?? body.gatewayLatitude, NaN);
+  const gatewayLng = toNumber(body.gatewayLng ?? body.gatewayLongitude, NaN);
   return {
     deviceId,
     gatewayId,
@@ -298,12 +306,12 @@ function normalizeIngest(body) {
 
 function smsMessageFor(alertType, deviceId, reading) {
   if (alertType === "geofence") {
-    return `Canh bao! Bo ID ${deviceId} da di ra khoi hang rao an toan`;
+    return `Cảnh báo! Bò ID ${deviceId} đã đi ra khỏi hàng rào an toàn`;
   }
   if (alertType === "battery") {
-    return `Canh bao! Bo ID ${deviceId} sap het pin (${reading.battery}%)`;
+    return `Cảnh báo! Bò ID ${deviceId} sắp hết pin (${reading.battery}%)`;
   }
-  return `Canh bao! Bo ID ${deviceId} can kiem tra`;
+  return `Cảnh báo! Bò ID ${deviceId} cần kiểm tra`;
 }
 
 function queueGatewayCommand(db, user, reading, alert) {
@@ -333,20 +341,20 @@ function evaluateAlerts(db, user, reading) {
   const now = reading.createdAt;
   const alerts = [];
   const commands = [];
-  const fence = user.geofence || {
-    lat: reading.gatewayLat || GATEWAY_DEFAULT_LAT,
-    lng: reading.gatewayLng || GATEWAY_DEFAULT_LNG,
-    radiusM: 500
-  };
-  const distanceFromFence = haversineMeters(fence.lat, fence.lng, reading.lat, reading.lng);
+  const gatewayCenter =
+    Number.isFinite(reading.gatewayLat) && Number.isFinite(reading.gatewayLng)
+      ? { lat: reading.gatewayLat, lng: reading.gatewayLng }
+      : gatewayCoordinatesForUser(db, user);
+  const radiusM = clamp(toNumber(user.geofence?.radiusM, 500), 20, 10000);
+  const distanceFromFence = haversineMeters(gatewayCenter.lat, gatewayCenter.lng, reading.lat, reading.lng);
 
-  if (distanceFromFence > fence.radiusM) {
+  if (distanceFromFence > radiusM) {
     alerts.push({
       id: crypto.randomUUID(),
       userId: user.id,
       deviceId: reading.deviceId,
       type: "geofence",
-      message: `BÃ² ${reading.deviceId} Ä‘Ã£ vÆ°á»£t hÃ ng rÃ o áº£o: ${Math.round(distanceFromFence)} m`,
+      message: `Bò ${reading.deviceId} đã vượt hàng rào ảo: ${Math.round(distanceFromFence)} m`,
       createdAt: now,
       acknowledged: false
     });
@@ -358,7 +366,7 @@ function evaluateAlerts(db, user, reading) {
       userId: user.id,
       deviceId: reading.deviceId,
       type: "battery",
-      message: `Pin vÃ²ng cá»• ${reading.deviceId} cÃ²n ${reading.battery}%`,
+      message: `Pin vòng cổ ${reading.deviceId} còn ${reading.battery}%`,
       createdAt: now,
       acknowledged: false
     });
@@ -381,9 +389,7 @@ function appendReading(db, owner, incoming) {
   }
 
   const gateway = db.gateways.find((item) => item.id === incoming.gatewayId) || ensureGateway(db, owner);
-  const distanceM = Number.isFinite(incoming.distanceM)
-    ? incoming.distanceM
-    : haversineMeters(gateway.lat, gateway.lng, incoming.lat, incoming.lng);
+  const distanceM = haversineMeters(gateway.lat, gateway.lng, incoming.lat, incoming.lng);
 
   const reading = {
     id: crypto.randomUUID(),
@@ -431,171 +437,10 @@ async function dispatchCommands(commands) {
         command.lastError = res.ok ? "" : `HTTP ${res.status}`;
       } catch (err) {
         command.status = "failed";
-        command.lastError = err && err.message ? err.message : "khong_gui_duoc_lenh";
+        command.lastError = err && err.message ? err.message : "Không gửi được lệnh";
       }
     })
   );
-}
-
-function nextSequence(db, deviceId) {
-  return (
-    db.readings
-      .filter((item) => item.deviceId === deviceId)
-      .reduce((max, item) => Math.max(max, Number(item.seq) || 0), 0) + 1
-  );
-}
-
-function simulationReading(db, user, deviceId, options = {}) {
-  const gateway = ensureGateway(db, user);
-  const fence = user.geofence || { lat: gateway.lat, lng: gateway.lng, radiusM: 500 };
-  const pos = pointFrom(
-    fence.lat,
-    fence.lng,
-    options.northM ?? 40,
-    options.eastM ?? 60
-  );
-  const distanceM = haversineMeters(gateway.lat, gateway.lng, pos.lat, pos.lng);
-
-  return normalizeIngest({
-    gatewayId: gateway.id,
-    deviceId,
-    lat: pos.lat,
-    lng: pos.lng,
-    battery: options.battery ?? 84,
-    distanceM,
-    gatewayLat: gateway.lat,
-    gatewayLng: gateway.lng,
-    rssi: options.rssi ?? -88,
-    snr: options.snr ?? 8.5,
-    seq: options.seq ?? nextSequence(db, deviceId),
-    fix: true,
-    createdAt: options.createdAt || new Date().toISOString()
-  });
-}
-
-function clearUserDemoData(db, user) {
-  db.readings = db.readings.filter((item) => !user.devices.includes(item.deviceId));
-  db.alerts = db.alerts.filter((item) => item.userId !== user.id);
-  db.gatewayCommands = db.gatewayCommands.filter((item) => item.userId !== user.id);
-}
-
-function runSimulation(db, user, scenario, body) {
-  const deviceId = normalizeDeviceId(body.deviceId || user.devices[0] || "");
-  const commands = [];
-  if (!deviceId || !user.devices.includes(deviceId)) {
-    return { status: 400, payload: { error: "thiet_bi_khong_hop_le" }, commands };
-  }
-
-  if (scenario === "reset") {
-    clearUserDemoData(db, user);
-    const reading = simulationReading(db, user, deviceId, { battery: 88, northM: 35, eastM: 45 });
-    const result = appendReading(db, user, reading);
-    commands.push(...result.commands);
-    return {
-      status: 200,
-      payload: { ok: true, message: "ÄÃ£ Ä‘áº·t láº¡i dá»¯ liá»‡u mÃ´ phá»ng", readings: [result.reading] },
-      commands
-    };
-  }
-
-  if (scenario === "normal") {
-    const offset = 30 + (nextSequence(db, deviceId) % 6) * 12;
-    const reading = simulationReading(db, user, deviceId, {
-      battery: 78 + (nextSequence(db, deviceId) % 15),
-      northM: offset,
-      eastM: 80 - offset
-    });
-    const result = appendReading(db, user, reading);
-    commands.push(...result.commands);
-    return {
-      status: 201,
-      payload: { ok: true, message: "ÄÃ£ táº¡o Ä‘iá»ƒm thá»i gian thá»±c", readings: [result.reading] },
-      commands
-    };
-  }
-
-  if (scenario === "history") {
-    const readings = [];
-    const now = Date.now();
-    const baseSeq = nextSequence(db, deviceId);
-    for (let index = 0; index < 6; index += 1) {
-      const reading = simulationReading(db, user, deviceId, {
-        battery: 92 - index * 3,
-        northM: 20 + index * 28,
-        eastM: -70 + index * 32,
-        rssi: -82 - index * 2,
-        snr: 9 - index * 0.3,
-        createdAt: new Date(now - (5 - index) * 30 * 60 * 1000).toISOString(),
-        seq: baseSeq + index
-      });
-      const result = appendReading(db, user, reading);
-      readings.push(result.reading);
-      commands.push(...result.commands);
-    }
-    return {
-      status: 201,
-      payload: { ok: true, message: "ÄÃ£ táº¡o 6 Ä‘iá»ƒm lá»‹ch sá»­ trong 3 giá» gáº§n nháº¥t", readings },
-      commands
-    };
-  }
-
-  if (scenario === "geofence") {
-    const radius = user.geofence?.radiusM || 500;
-    const reading = simulationReading(db, user, deviceId, {
-      battery: 72,
-      northM: radius + 180,
-      eastM: radius + 120,
-      rssi: -105,
-      snr: 4.2
-    });
-    const result = appendReading(db, user, reading);
-    commands.push(...result.commands);
-    return {
-      status: 201,
-      payload: { ok: true, message: "ÄÃ£ táº¡o tÃ¬nh huá»‘ng vÆ°á»£t hÃ ng rÃ o áº£o", readings: [result.reading] },
-      commands
-    };
-  }
-
-  if (scenario === "battery") {
-    const reading = simulationReading(db, user, deviceId, {
-      battery: 7,
-      northM: 55,
-      eastM: 35,
-      rssi: -91,
-      snr: 7.1
-    });
-    const result = appendReading(db, user, reading);
-    commands.push(...result.commands);
-    return {
-      status: 201,
-      payload: { ok: true, message: "ÄÃ£ táº¡o tÃ¬nh huá»‘ng pin yáº¿u", readings: [result.reading] },
-      commands
-    };
-  }
-
-  if (scenario === "full") {
-    clearUserDemoData(db, user);
-    const history = runSimulation(db, user, "history", { deviceId });
-    commands.push(...history.commands);
-    const radius = user.geofence?.radiusM || 500;
-    const reading = simulationReading(db, user, deviceId, {
-      battery: 7,
-      northM: radius + 220,
-      eastM: radius + 160,
-      rssi: -108,
-      snr: 3.9
-    });
-    const result = appendReading(db, user, reading);
-    commands.push(...result.commands);
-    return {
-      status: 201,
-      payload: { ok: true, message: "ÄÃ£ táº¡o lá»‹ch sá»­, vÆ°á»£t rÃ o vÃ  pin yáº¿u" },
-      commands
-    };
-  }
-
-  return { status: 404, payload: { error: "kich_ban_mo_phong_khong_hop_le" }, commands };
 }
 
 function registerDevice(db, body) {
@@ -604,10 +449,15 @@ function registerDevice(db, body) {
   const registrationToken = String(body.registrationToken || "");
 
   if (!validateFarmCode(loginCode)) {
-    return { status: 400, payload: { error: "ma_trang_trai_phai_gom_6_so" } };
+    return { status: 400, payload: { error: "Mã trang trại phải gồm 6 số" } };
   }
   if (!validateDeviceId(deviceId)) {
-    return { status: 400, payload: { error: "ma_vong_co_khong_hop_le" } };
+    return {
+      status: 400,
+      payload: {
+        error: "Mã ID không hợp lệ. Vui lòng nhập đúng định dạng MAC (VD: B0:A1:C2:D3:E4:F5)"
+      }
+    };
   }
 
   const deviceOwner = findOwnerByDevice(db, deviceId);
@@ -615,8 +465,7 @@ function registerDevice(db, body) {
     return {
       status: 409,
       payload: {
-        error: "vong_co_da_thuoc_trang_trai_khac",
-        message: "MÃ£ ID vÃ²ng cá»• nÃ y Ä‘Ã£ Ä‘Æ°á»£c gáº¯n vá»›i mÃ£ trang tráº¡i khÃ¡c."
+        error: "Mã ID vòng cổ này đã được gắn với mã trang trại khác."
       }
     };
   }
@@ -629,7 +478,7 @@ function registerDevice(db, body) {
     user = {
       id: `farm-${loginCode}`,
       loginCode,
-      name: `Trang trai ${loginCode}`,
+      name: `Trang trại ${loginCode}`,
       phone: "",
       devices: [],
       geofence: {
@@ -649,8 +498,7 @@ function registerDevice(db, body) {
     return {
       status: 409,
       payload: {
-        error: "ma_trang_trai_da_ton_tai",
-        message: "MÃ£ trang tráº¡i nÃ y Ä‘Ã£ tá»“n táº¡i. HÃ£y nháº­p mÃ£ khÃ¡c hoáº·c báº¥m Táº¡o mÃ£."
+        error: "Mã trang trại này đã tồn tại. Hãy nhập mã khác hoặc bấm Tạo mã."
       }
     };
   }
@@ -693,10 +541,10 @@ async function handleApi(req, res, pathname) {
     const body = await readBody(req);
     const code = normalizeFarmCode(body.code || body.farmCode || body.loginCode);
     if (!validateFarmCode(code)) {
-      return sendJson(res, 400, { error: "ma_trang_trai_phai_gom_6_so" });
+      return sendJson(res, 400, { error: "Mã trang trại phải gồm 6 số" });
     }
     const user = db.users.find((item) => item.loginCode === code);
-    if (!user) return sendJson(res, 401, { error: "ma_trang_trai_khong_ton_tai" });
+    if (!user) return sendJson(res, 401, { error: "Mã trang trại không tồn tại" });
     const token = crypto.randomBytes(32).toString("hex");
     sessions.set(token, { userId: user.id, createdAt: Date.now() });
     return sendJson(res, 200, { token, user: publicUser(user) });
@@ -704,7 +552,7 @@ async function handleApi(req, res, pathname) {
 
   if (req.method === "POST" && pathname === "/api/ingest") {
     if (!requireGateway(req)) {
-      return sendJson(res, 401, { error: "token_gateway_khong_hop_le" });
+      return sendJson(res, 401, { error: "Token gateway không hợp lệ" });
     }
 
     const incoming = normalizeIngest(await readBody(req));
@@ -714,12 +562,15 @@ async function handleApi(req, res, pathname) {
       !Number.isFinite(incoming.lat) ||
       !Number.isFinite(incoming.lng)
     ) {
-      return sendJson(res, 400, { error: "du_lieu_dinh_vi_khong_hop_le" });
+      return sendJson(res, 400, { error: "Dữ liệu định vị không hợp lệ" });
     }
 
     const owner = findOwnerByDevice(db, incoming.deviceId);
     if (!owner) {
-      return sendJson(res, 404, { error: "thiet_bi_chua_duoc_gan_cho_trang_trai", deviceId: incoming.deviceId });
+      return sendJson(res, 404, {
+        error: "Thiết bị chưa được gắn cho trang trại",
+        deviceId: incoming.deviceId
+      });
     }
 
     const result = appendReading(db, owner, incoming);
@@ -735,23 +586,26 @@ async function handleApi(req, res, pathname) {
 
   if (req.method === "POST" && pathname === "/api/provision") {
     if ((req.headers["x-admin-token"] || "") !== ADMIN_TOKEN) {
-      return sendJson(res, 401, { error: "token_quan_tri_khong_hop_le" });
+      return sendJson(res, 401, { error: "Token quản trị không hợp lệ" });
     }
     const body = await readBody(req);
     const loginCode = normalizeFarmCode(body.loginCode || body.farmCode || body.code);
     if (!validateFarmCode(loginCode)) {
-      return sendJson(res, 400, { error: "ma_trang_trai_phai_gom_6_so" });
+      return sendJson(res, 400, { error: "Mã trang trại phải gồm 6 số" });
     }
     const devices = Array.isArray(body.devices)
       ? body.devices.map(normalizeDeviceId)
       : [normalizeDeviceId(body.deviceId || body.collarId)];
     if (devices.length === 0 || devices.some((device) => !validateDeviceId(device))) {
-      return sendJson(res, 400, { error: "ma_vong_co_khong_hop_le" });
+      return sendJson(res, 400, { error: "Mã vòng cổ không hợp lệ" });
     }
     for (const device of devices) {
       const owner = findOwnerByDevice(db, device);
       if (owner && owner.loginCode !== loginCode) {
-        return sendJson(res, 409, { error: "vong_co_da_thuoc_trang_trai_khac", deviceId: device });
+        return sendJson(res, 409, {
+          error: "Vòng cổ đã thuộc trang trại khác",
+          deviceId: device
+        });
       }
     }
 
@@ -760,7 +614,7 @@ async function handleApi(req, res, pathname) {
       user = {
         id: `farm-${loginCode}`,
         loginCode,
-        name: `Trang trai ${loginCode}`,
+        name: `Trang trại ${loginCode}`,
         phone: "",
         devices: [],
         geofence: {
@@ -790,7 +644,7 @@ async function handleApi(req, res, pathname) {
 
   if (pathname.startsWith("/api/gateway/")) {
     if (!requireGateway(req)) {
-      return sendJson(res, 401, { error: "token_gateway_khong_hop_le" });
+      return sendJson(res, 401, { error: "Token gateway không hợp lệ" });
     }
 
     if (req.method === "GET" && pathname === "/api/gateway/commands") {
@@ -825,18 +679,7 @@ async function handleApi(req, res, pathname) {
   }
 
   const user = requireUser(req, db);
-  if (!user) return sendJson(res, 401, { error: "chua_dang_nhap" });
-
-  if (req.method === "POST" && pathname.startsWith("/api/simulate/")) {
-    const scenario = pathname.split("/").pop();
-    const body = await readBody(req);
-    const result = runSimulation(db, user, scenario, body);
-    if (result.payload.ok) {
-      await dispatchCommands(result.commands);
-      writeDb(db);
-    }
-    return sendJson(res, result.status, result.payload);
-  }
+  if (!user) return sendJson(res, 401, { error: "Chưa đăng nhập" });
 
   if (req.method === "GET" && pathname === "/api/me") {
     return sendJson(res, 200, { user: publicUser(user), gateway: userGateway(db, user.id) });
@@ -845,7 +688,7 @@ async function handleApi(req, res, pathname) {
   if (req.method === "GET" && pathname === "/api/latest") {
     return sendJson(res, 200, {
       gateway: userGateway(db, user.id),
-      geofence: user.geofence,
+      geofence: geofenceForUser(db, user),
       readings: latestReadingsForUser(db, user)
     });
   }
@@ -855,7 +698,7 @@ async function handleApi(req, res, pathname) {
     const hours = clamp(toNumber(url.searchParams.get("hours"), 3), 1, 24);
     const deviceId = normalizeDeviceId(url.searchParams.get("deviceId") || user.devices[0]);
     if (!user.devices.includes(deviceId)) {
-      return sendJson(res, 403, { error: "khong_co_quyen_xem_thiet_bi" });
+      return sendJson(res, 403, { error: "Không có quyền xem thiết bị" });
     }
     const since = Date.now() - hours * 60 * 60 * 1000;
     const points = db.readings
@@ -867,17 +710,15 @@ async function handleApi(req, res, pathname) {
 
   if (req.method === "PUT" && pathname === "/api/geofence") {
     const body = await readBody(req);
+    const currentFence = geofenceForUser(db, user);
     user.geofence = {
-      lat: toNumber(body.lat, user.geofence.lat),
-      lng: toNumber(body.lng, user.geofence.lng),
-      radiusM: clamp(toNumber(body.radiusM, user.geofence.radiusM), 20, 10000)
+      lat: currentFence.lat,
+      lng: currentFence.lng,
+      radiusM: clamp(toNumber(body.radiusM, currentFence.radiusM), 20, 10000)
     };
     const gateway = ensureGateway(db, user);
-    gateway.lat = user.geofence.lat;
-    gateway.lng = user.geofence.lng;
-    gateway.updatedAt = new Date().toISOString();
     writeDb(db);
-    return sendJson(res, 200, { ok: true, geofence: user.geofence, gateway });
+    return sendJson(res, 200, { ok: true, geofence: geofenceForUser(db, user), gateway });
   }
 
   if (req.method === "GET" && pathname === "/api/alerts") {
@@ -888,14 +729,6 @@ async function handleApi(req, res, pathname) {
     return sendJson(res, 200, { alerts });
   }
 
-  if (req.method === "GET" && pathname === "/api/commands") {
-    const commands = db.gatewayCommands
-      .filter((item) => item.userId === user.id)
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 30);
-    return sendJson(res, 200, { commands });
-  }
-
   return notFound(res);
 }
 
@@ -903,11 +736,11 @@ function serveStatic(req, res, pathname) {
   const safePath = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
   const filePath = path.normalize(path.join(PUBLIC_DIR, safePath));
   if (!filePath.startsWith(PUBLIC_DIR)) {
-    res.status(403).type("text/plain; charset=utf-8").send("Khong co quyen truy cap");
+    res.status(403).type("text/plain; charset=utf-8").send("Không có quyền truy cập");
     return;
   }
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-    res.status(404).type("text/plain; charset=utf-8").send("Khong tim thay");
+    res.status(404).type("text/plain; charset=utf-8").send("Không tìm thấy");
     return;
   }
   res.sendFile(filePath);
@@ -922,11 +755,11 @@ app.use(async (req, res) => {
     }
     serveStatic(req, res, url.pathname);
   } catch (err) {
-    const message = err && err.message ? err.message : "loi_may_chu";
-    sendJson(res, message === "json_khong_hop_le" ? 400 : 500, { error: message });
+    const message = err && err.message ? err.message : "Lỗi máy chủ";
+    sendJson(res, message === "JSON không hợp lệ" ? 400 : 500, { error: message });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Ung dung giam sat gia suc dang chay tai http://localhost:${PORT}`);
+  console.log(`Ứng dụng giám sát gia súc đang chạy tại http://localhost:${PORT}`);
 });
