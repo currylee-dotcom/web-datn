@@ -21,7 +21,7 @@ const INVALID_COLLAR_ID_MESSAGE =
   "Mã ID không hợp lệ. Vui lòng nhập đúng định dạng MAC (VD: B0:A1:C2:D3:E4:F5)";
 const INVALID_FARM_CODE_MESSAGE = "Mã trang trại phải gồm 6 số";
 const COLLAR_MAC_PATTERN = /^[0-9A-F]{2}(:[0-9A-F]{2}){5}$/;
-const PREFER_FALLBACK_MAP = true;
+const PREFER_FALLBACK_MAP = false;
 
 const els = {
   entryView: document.getElementById("entryView"),
@@ -289,10 +289,13 @@ function ensureMap() {
   }).setView([10.776889, 106.700806], 16);
   L.control.zoom({ position: "bottomright" }).addTo(state.map);
 
-  state.mapTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 20,
-    attribution: "&copy; OpenStreetMap"
-  });
+  state.mapTileLayer = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      maxZoom: 19,
+      attribution: "Tiles &copy; Esri"
+    }
+  );
   state.mapTileLayer.on("tileload", () => {
     state.mapTileLoads += 1;
   });
@@ -486,8 +489,7 @@ function drawRealtime() {
   }
 
   if (state.layers.fenceCircle) {
-    bounds.extend(state.layers.fenceCircle.getBounds().getNorthEast());
-    bounds.extend(state.layers.fenceCircle.getBounds().getSouthWest());
+    state.layers.fenceCircle.bringToBack();
   }
   if (state.readings.length > 0) {
     state.map.fitBounds(bounds.pad(0.22), { padding: [48, 48], maxZoom: 18, animate: false });
@@ -543,8 +545,7 @@ async function drawHistory() {
   const bounds = L.latLngBounds(points);
   bounds.extend([gateway.lat, gateway.lng]);
   if (state.layers.fenceCircle) {
-    bounds.extend(state.layers.fenceCircle.getBounds().getNorthEast());
-    bounds.extend(state.layers.fenceCircle.getBounds().getSouthWest());
+    state.layers.fenceCircle.bringToBack();
   }
   state.map.fitBounds(bounds.pad(0.12), { padding: [48, 48], maxZoom: 18, animate: false });
   invalidateMapSize(0);
@@ -553,15 +554,14 @@ async function drawHistory() {
 
 function createFarmProjection(points, width, height) {
   const gateway = gatewayPoint();
-  const radiusM = Math.max(20, Number(state.geofence?.radiusM || 500));
   const metersPerLat = 111320;
   const metersPerLng = 111320 * Math.max(Math.cos((gateway.lat * Math.PI) / 180), 0.2);
   const deltas = points.map((point) => ({
     x: (point.lng - gateway.lng) * metersPerLng,
     y: (point.lat - gateway.lat) * metersPerLat
   }));
-  const maxX = Math.max(...deltas.map((point) => Math.abs(point.x)), radiusM);
-  const maxY = Math.max(...deltas.map((point) => Math.abs(point.y)), radiusM);
+  const maxX = Math.max(...deltas.map((point) => Math.abs(point.x)), 140);
+  const maxY = Math.max(...deltas.map((point) => Math.abs(point.y)), 140);
   const safeWidth = Math.max(160, width - 110);
   const safeHeight = Math.max(160, height - 110);
   const metersPerPixel = Math.max((maxX * 2.35) / safeWidth, (maxY * 2.35) / safeHeight, 0.45);

@@ -330,20 +330,41 @@ label {
 .fallback-map {
   overflow: hidden;
   background:
-    linear-gradient(118deg, transparent 0 46%, rgba(230, 202, 121, 0.68) 46% 50%, transparent 50% 100%),
-    linear-gradient(22deg, rgba(75, 151, 184, 0.26) 0 14%, transparent 14% 100%),
-    linear-gradient(90deg, #8fc46e 0 26%, #e4c75f 26% 42%, #6faa62 42% 70%, #b7d4a4 70% 100%);
+    radial-gradient(circle at 16% 18%, rgba(173, 166, 103, 0.42) 0 8%, transparent 9%),
+    radial-gradient(circle at 76% 22%, rgba(41, 73, 54, 0.58) 0 14%, transparent 15%),
+    radial-gradient(circle at 60% 78%, rgba(100, 122, 73, 0.44) 0 18%, transparent 19%),
+    linear-gradient(118deg, transparent 0 45%, rgba(192, 178, 132, 0.5) 46% 49%, transparent 50% 100%),
+    linear-gradient(24deg, rgba(57, 104, 120, 0.24) 0 12%, transparent 13% 100%),
+    linear-gradient(90deg, #3f5838 0 24%, #626f3f 24% 41%, #2f513a 41% 68%, #6b7349 68% 100%);
+  background-color: #425338;
 }
 
-.fallback-map::before {
+.fallback-map::before,
+.fallback-map::after {
   content: "";
   position: absolute;
   inset: 0;
+  pointer-events: none;
+}
+
+.fallback-map::before {
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.24) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.24) 1px, transparent 1px);
-  background-size: 68px 68px;
-  opacity: 0.55;
+    linear-gradient(36deg, transparent 0 46%, rgba(206, 199, 164, 0.42) 47% 49%, transparent 50% 100%),
+    linear-gradient(104deg, transparent 0 61%, rgba(109, 126, 92, 0.38) 62% 64%, transparent 65% 100%),
+    repeating-linear-gradient(8deg, rgba(255, 255, 255, 0.08) 0 2px, transparent 2px 46px),
+    repeating-linear-gradient(96deg, rgba(10, 24, 18, 0.12) 0 1px, transparent 1px 58px);
+  background-size: 100% 100%, 100% 100%, 180px 180px, 210px 210px;
+  mix-blend-mode: overlay;
+  opacity: 0.9;
+  z-index: 0;
+}
+
+.fallback-map::after {
+  background:
+    radial-gradient(circle at 20% 78%, rgba(13, 31, 26, 0.34) 0 16%, transparent 34%),
+    radial-gradient(circle at 82% 58%, rgba(22, 46, 31, 0.28) 0 17%, transparent 32%),
+    linear-gradient(rgba(21, 34, 29, 0.2), rgba(238, 224, 178, 0.08));
+  z-index: 1;
 }
 
 .farm-overlay {
@@ -489,7 +510,11 @@ label {
 
 .leaflet-container {
   font: inherit;
-  background: #ddebd6;
+  background: #344332;
+}
+
+#map .leaflet-tile-pane {
+  filter: saturate(1.08) contrast(1.04);
 }
 
 .leaflet-control-zoom a {
