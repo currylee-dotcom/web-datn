@@ -24,6 +24,9 @@ const INVALID_FARM_CODE_MESSAGE = "Mã trang trại phải gồm 6 số";
 const COLLAR_MAC_PATTERN = /^[0-9A-F]{2}(:[0-9A-F]{2}){5}$/;
 const PREFER_FALLBACK_MAP = false;
 const MAP_FRAME_RADIUS_M = 320;
+const FENCE_STROKE_COLOR = "#f2c94c";
+const FENCE_FILL_COLOR = "rgba(242, 201, 76, 0.2)";
+const FENCE_DASH_ARRAY = "14 10";
 
 const els = {
   entryView: document.getElementById("entryView"),
@@ -49,7 +52,6 @@ const els = {
   logoutBtn: document.getElementById("logoutBtn"),
   realtimeTab: document.getElementById("realtimeTab"),
   historyTab: document.getElementById("historyTab"),
-  geofenceTab: document.getElementById("geofenceTab"),
   mapCanvas: document.getElementById("map"),
   fallbackMap: document.getElementById("fallbackMap"),
   deviceSelect: document.getElementById("deviceSelect"),
@@ -331,7 +333,6 @@ function clearLayer(name) {
 function setTabs() {
   els.realtimeTab.classList.toggle("active", state.mode === "realtime");
   els.historyTab.classList.toggle("active", state.mode === "history");
-  els.geofenceTab.classList.toggle("active", state.mode === "geofence");
 }
 
 function selectedReading() {
@@ -427,10 +428,11 @@ function drawFence() {
   const center = gatewayCenter();
   state.layers.fenceCircle = L.circle(center, {
     radius: state.geofence.radiusM,
-    color: "#2f8d59",
-    fillColor: "#2f8d59",
-    fillOpacity: 0.12,
-    opacity: 0.88,
+    color: FENCE_STROKE_COLOR,
+    dashArray: FENCE_DASH_ARRAY,
+    fillColor: FENCE_STROKE_COLOR,
+    fillOpacity: 0.2,
+    opacity: 0.95,
     weight: 3
   }).addTo(state.map);
 
@@ -443,7 +445,7 @@ function drawFence() {
 
   const handle = destinationPoint(center[0], center[1], state.geofence.radiusM);
   state.layers.fenceHandle = L.marker(handle, {
-    draggable: state.mode === "geofence",
+    draggable: false,
     icon: handleIcon()
   })
     .bindPopup("Bán kính an toàn")
@@ -659,12 +661,10 @@ function updateFallbackFenceVisualsOnly() {
   const circle = els.fallbackMap.querySelector(".farm-overlay circle");
   if (!circle) return false;
   const radiusM = Math.max(20, Number(state.geofence.radiusM || 500));
-  const selected = selectedReading();
-  const isOutside = Boolean(selected && selected.distanceM > radiusM);
-  const strokeColor = isOutside ? "#c94735" : "#2f8d59";
   circle.setAttribute("r", radiusM / state.fallbackView.metersPerPixel);
-  circle.setAttribute("fill", isOutside ? "rgba(201,71,53,0.12)" : "rgba(47,141,89,0.14)");
-  circle.setAttribute("stroke", strokeColor);
+  circle.setAttribute("fill", FENCE_FILL_COLOR);
+  circle.setAttribute("stroke", FENCE_STROKE_COLOR);
+  circle.setAttribute("stroke-dasharray", FENCE_DASH_ARRAY);
 
   els.fallbackMap.querySelectorAll("[data-distance-m]").forEach((line) => {
     const distanceM = Number(line.getAttribute("data-distance-m"));
@@ -696,14 +696,9 @@ function renderFallback(readings, historyPoints = [], historyDeviceId = "") {
     gatewayXY
   };
   const radiusPx = radiusM / projection.metersPerPixel;
-  const selected = selectedReading();
-  const isOutside = Boolean(selected && selected.distanceM > radiusM);
-  const strokeColor = isOutside ? "#c94735" : "#2f8d59";
   const children = [
     `<svg class="farm-overlay" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">`,
-    `<circle cx="${gatewayXY.x}" cy="${gatewayXY.y}" r="${radiusPx}" fill="${
-      isOutside ? "rgba(201,71,53,0.12)" : "rgba(47,141,89,0.14)"
-    }" stroke="${strokeColor}" stroke-width="3"></circle>`
+    `<circle cx="${gatewayXY.x}" cy="${gatewayXY.y}" r="${radiusPx}" fill="${FENCE_FILL_COLOR}" stroke="${FENCE_STROKE_COLOR}" stroke-width="3" stroke-dasharray="${FENCE_DASH_ARRAY}"></circle>`
   ];
 
   if (state.mode === "history") {
@@ -956,12 +951,6 @@ els.realtimeTab.addEventListener("click", async () => {
 
 els.historyTab.addEventListener("click", async () => {
   state.mode = "history";
-  invalidateMapSize(200);
-  await refreshData();
-});
-
-els.geofenceTab.addEventListener("click", async () => {
-  state.mode = "geofence";
   invalidateMapSize(200);
   await refreshData();
 });
