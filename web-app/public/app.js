@@ -14,6 +14,7 @@ const state = {
   mapTileLoads: 0,
   mapHealthTimers: [],
   layers: {},
+  fallbackView: null,
   refreshTimer: null
 };
 
@@ -22,6 +23,7 @@ const INVALID_COLLAR_ID_MESSAGE =
 const INVALID_FARM_CODE_MESSAGE = "Mã trang trại phải gồm 6 số";
 const COLLAR_MAC_PATTERN = /^[0-9A-F]{2}(:[0-9A-F]{2}){5}$/;
 const PREFER_FALLBACK_MAP = false;
+const MAP_FRAME_RADIUS_M = 320;
 
 const els = {
   entryView: document.getElementById("entryView"),
@@ -387,9 +389,21 @@ function gatewayPoint() {
 }
 
 function destinationPoint(lat, lng, metersEast) {
+  return offsetPoint(lat, lng, 0, metersEast);
+}
+
+function offsetPoint(lat, lng, metersNorth, metersEast) {
   const earthRadiusM = 6371000;
+  const dLat = (metersNorth / earthRadiusM) * (180 / Math.PI);
   const dLng = (metersEast / (earthRadiusM * Math.cos((lat * Math.PI) / 180))) * (180 / Math.PI);
-  return [lat, lng + dLng];
+  return [lat + dLat, lng + dLng];
+}
+
+function extendStableMapFrame(bounds, center) {
+  const lat = Array.isArray(center) ? center[0] : center.lat;
+  const lng = Array.isArray(center) ? center[1] : center.lng;
+  bounds.extend(offsetPoint(lat, lng, MAP_FRAME_RADIUS_M, MAP_FRAME_RADIUS_M));
+  bounds.extend(offsetPoint(lat, lng, -MAP_FRAME_RADIUS_M, -MAP_FRAME_RADIUS_M));
 }
 
 function updateFenceFromHandle(handleLatLng) {
@@ -435,7 +449,34 @@ function drawFence() {
     .bindPopup("Bán kính an toàn")
     .addTo(state.map);
   state.layers.fenceHandle.on("drag", (event) => updateFenceFromHandle(event.target.getLatLng()));
-  state.layers.fenceHandle.on("dragend", () => drawMode());
+  state.layers.fenceHandle.on("dragend", updateFenceVisualsOnly);
+}
+
+function updateLeafletFenceVisualsOnly() {
+  if (!state.map || state.mapEngine !== "leaflet" || !state.geofence) return false;
+  const center = gatewayCenter();
+  if (state.layers.fenceCircle) {
+    state.layers.fenceCircle.setLatLng(center);
+    state.layers.fenceCircle.setRadius(state.geofence.radiusM);
+    state.layers.fenceCircle.bringToBack();
+  }
+  if (state.layers.fenceCenter) {
+    state.layers.fenceCenter.setLatLng(center);
+  }
+  if (state.layers.fenceHandle) {
+    state.layers.fenceHandle.setLatLng(destinationPoint(center[0], center[1], state.geofence.radiusM));
+  }
+  if (state.layers.lines) {
+    let index = 0;
+    state.layers.lines.eachLayer((line) => {
+      const reading = state.readings[index];
+      if (reading && typeof line.setStyle === "function") {
+        line.setStyle({ color: reading.distanceM > state.geofence.radiusM ? "#c94735" : "#263126" });
+      }
+      index += 1;
+    });
+  }
+  return Boolean(state.layers.fenceCircle);
 }
 
 function drawRealtime() {
@@ -491,6 +532,7 @@ function drawRealtime() {
   if (state.layers.fenceCircle) {
     state.layers.fenceCircle.bringToBack();
   }
+  extendStableMapFrame(bounds, gateway);
   if (state.readings.length > 0) {
     state.map.fitBounds(bounds.pad(0.22), { padding: [48, 48], maxZoom: 18, animate: false });
   } else {
@@ -547,6 +589,7 @@ async function drawHistory() {
   if (state.layers.fenceCircle) {
     state.layers.fenceCircle.bringToBack();
   }
+  extendStableMapFrame(bounds, gateway);
   state.map.fitBounds(bounds.pad(0.12), { padding: [48, 48], maxZoom: 18, animate: false });
   invalidateMapSize(0);
   scheduleMapHealthChecks();
@@ -560,8 +603,8 @@ function createFarmProjection(points, width, height) {
     x: (point.lng - gateway.lng) * metersPerLng,
     y: (point.lat - gateway.lat) * metersPerLat
   }));
-  const maxX = Math.max(...deltas.map((point) => Math.abs(point.x)), 140);
-  const maxY = Math.max(...deltas.map((point) => Math.abs(point.y)), 140);
+  const maxX = Math.max(...deltas.map((point) => Math.abs(point.x)), MAP_FRAME_RADIUS_M);
+  const maxY = Math.max(...deltas.map((point) => Math.abs(point.y)), MAP_FRAME_RADIUS_M);
   const safeWidth = Math.max(160, width - 110);
   const safeHeight = Math.max(160, height - 110);
   const metersPerPixel = Math.max((maxX * 2.35) / safeWidth, (maxY * 2.35) / safeHeight, 0.45);
@@ -611,6 +654,30 @@ function addFallbackScale(map, metersPerPixel) {
   map.appendChild(scale);
 }
 
+function updateFallbackFenceVisualsOnly() {
+  if (state.mapEngine !== "fallback" || !state.geofence || !state.fallbackView) return false;
+  const circle = els.fallbackMap.querySelector(".farm-overlay circle");
+  if (!circle) return false;
+  const radiusM = Math.max(20, Number(state.geofence.radiusM || 500));
+  const selected = selectedReading();
+  const isOutside = Boolean(selected && selected.distanceM > radiusM);
+  const strokeColor = isOutside ? "#c94735" : "#2f8d59";
+  circle.setAttribute("r", radiusM / state.fallbackView.metersPerPixel);
+  circle.setAttribute("fill", isOutside ? "rgba(201,71,53,0.12)" : "rgba(47,141,89,0.14)");
+  circle.setAttribute("stroke", strokeColor);
+
+  els.fallbackMap.querySelectorAll("[data-distance-m]").forEach((line) => {
+    const distanceM = Number(line.getAttribute("data-distance-m"));
+    line.setAttribute("stroke", distanceM > radiusM ? "#c94735" : "#263126");
+  });
+  return true;
+}
+
+function updateFenceVisualsOnly() {
+  if (updateLeafletFenceVisualsOnly() || updateFallbackFenceVisualsOnly()) return;
+  void drawMode();
+}
+
 function renderFallback(readings, historyPoints = [], historyDeviceId = "") {
   activateFallbackMap();
   const map = els.fallbackMap;
@@ -624,6 +691,10 @@ function renderFallback(readings, historyPoints = [], historyDeviceId = "") {
   const height = Math.max(320, map.clientHeight || 560);
   const projection = createFarmProjection(pointsForBounds, width, height);
   const gatewayXY = projection.project(gateway);
+  state.fallbackView = {
+    metersPerPixel: projection.metersPerPixel,
+    gatewayXY
+  };
   const radiusPx = radiusM / projection.metersPerPixel;
   const selected = selectedReading();
   const isOutside = Boolean(selected && selected.distanceM > radiusM);
@@ -652,7 +723,7 @@ function renderFallback(readings, historyPoints = [], historyDeviceId = "") {
       const cowXY = projection.project(reading);
       const lineColor = reading.distanceM > radiusM ? "#c94735" : "#263126";
       children.push(
-        `<line x1="${gatewayXY.x}" y1="${gatewayXY.y}" x2="${cowXY.x}" y2="${cowXY.y}" stroke="${lineColor}" stroke-width="4" stroke-dasharray="9 9" stroke-linecap="round"></line>`
+        `<line x1="${gatewayXY.x}" y1="${gatewayXY.y}" x2="${cowXY.x}" y2="${cowXY.y}" stroke="${lineColor}" stroke-width="4" stroke-dasharray="9 9" stroke-linecap="round" data-distance-m="${reading.distanceM}"></line>`
       );
     });
   }
@@ -771,7 +842,7 @@ function setRadius(value) {
   const radius = Math.max(20, Math.min(10000, Number(value) || state.geofence.radiusM));
   state.geofence.radiusM = radius;
   updateFenceInputs();
-  drawMode();
+  updateFenceVisualsOnly();
 }
 
 els.registerModeBtn.addEventListener("click", () => showEntry("register"));
@@ -907,7 +978,7 @@ els.saveFenceBtn.addEventListener("click", async () => {
   state.geofence = data.geofence;
   state.gateway = data.gateway;
   updateFenceInputs();
-  await drawMode();
+  updateFenceVisualsOnly();
 });
 
 bootstrap();

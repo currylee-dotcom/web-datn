@@ -509,8 +509,113 @@ label {
 }
 
 .leaflet-container {
+  position: relative;
+  overflow: hidden;
   font: inherit;
   background: #344332;
+}
+
+.leaflet-pane,
+.leaflet-map-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-image-layer,
+.leaflet-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+  user-select: none;
+}
+
+.leaflet-tile-pane {
+  z-index: 200;
+}
+
+.leaflet-overlay-pane {
+  z-index: 400;
+}
+
+.leaflet-shadow-pane {
+  z-index: 500;
+}
+
+.leaflet-marker-pane {
+  z-index: 600;
+}
+
+.leaflet-tooltip-pane {
+  z-index: 650;
+}
+
+.leaflet-popup-pane {
+  z-index: 700;
+}
+
+.leaflet-control-container .leaflet-top,
+.leaflet-control-container .leaflet-bottom {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.leaflet-top {
+  top: 0;
+}
+
+.leaflet-right {
+  right: 0;
+}
+
+.leaflet-bottom {
+  bottom: 0;
+}
+
+.leaflet-left {
+  left: 0;
+}
+
+.leaflet-control {
+  position: relative;
+  z-index: 800;
+  pointer-events: auto;
+}
+
+.leaflet-right .leaflet-control {
+  margin-right: 12px;
+}
+
+.leaflet-bottom .leaflet-control {
+  margin-bottom: 12px;
+}
+
+.leaflet-control-zoom {
+  overflow: hidden;
+  border: 1px solid rgba(26, 46, 31, 0.25);
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(15, 28, 18, 0.18);
+}
+
+.leaflet-control-zoom a {
+  display: block;
+  width: 34px;
+  height: 34px;
+  background: rgba(255, 255, 255, 0.94);
+  line-height: 34px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.leaflet-control-zoom a + a {
+  border-top: 1px solid rgba(26, 46, 31, 0.15);
 }
 
 #map .leaflet-tile-pane {
