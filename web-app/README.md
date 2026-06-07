@@ -39,17 +39,12 @@ Content-Type: application/json
 
 ```json
 {
-  "gatewayId": "gateway-888888",
   "deviceId": "B0:A1:C2:D3:E4:F5",
   "lat": 10.77755,
   "lng": 106.70124,
-  "battery": 86,
-  "gatewayLat": 10.776889,
-  "gatewayLng": 106.700806,
   "rssi": -92,
-  "snr": 8.5,
-  "seq": 1,
-  "fix": true
+  "gatewayLat": 10.77690,
+  "gatewayLng": 106.70090
 }
 ```
 

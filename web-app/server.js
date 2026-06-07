@@ -9,11 +9,11 @@ const DATA_FILE = process.env.DATA_FILE
   ? path.resolve(process.env.DATA_FILE)
   : path.join(__dirname, "data", "db.json");
 const PUBLIC_DIR = path.join(__dirname, "public");
-const GATEWAY_TOKEN = "dev-gateway-token";
+const GATEWAY_TOKEN = process.env.IOT_GATEWAY_TOKEN || "dev-gateway-token";
 const ADMIN_TOKEN = process.env.IOT_ADMIN_TOKEN || "dev-admin-token";
 const GATEWAY_COMMAND_URL = process.env.GATEWAY_COMMAND_URL || "";
-const GATEWAY_DEFAULT_LAT = 10.776889;
-const GATEWAY_DEFAULT_LNG = 106.700806;
+const INITIAL_MAP_CENTER_LAT = 21.0056;
+const INITIAL_MAP_CENTER_LNG = 105.8427;
 const sessions = new Map();
 const registrationClaims = new Map();
 
@@ -31,8 +31,8 @@ function defaultDb() {
         phone: "+84000000000",
         devices: ["B0:A1:C2:D3:E4:F5", "B0:A1:C2:D3:E4:F6"],
         geofence: {
-          lat: GATEWAY_DEFAULT_LAT,
-          lng: GATEWAY_DEFAULT_LNG,
+          lat: INITIAL_MAP_CENTER_LAT,
+          lng: INITIAL_MAP_CENTER_LNG,
           radiusM: 500
         }
       }
@@ -41,8 +41,8 @@ function defaultDb() {
       {
         id: "gateway-888888",
         userId: "farm-888888",
-        lat: GATEWAY_DEFAULT_LAT,
-        lng: GATEWAY_DEFAULT_LNG,
+        lat: INITIAL_MAP_CENTER_LAT,
+        lng: INITIAL_MAP_CENTER_LNG,
         updatedAt: now
       }
     ],
@@ -80,8 +80,8 @@ function migrateDb(db) {
     user.phone = user.phone || "";
     user.devices = Array.isArray(user.devices) ? Array.from(new Set(user.devices.map(normalizeDeviceId))) : [];
     user.geofence = {
-      lat: toNumber(user.geofence?.lat, GATEWAY_DEFAULT_LAT),
-      lng: toNumber(user.geofence?.lng, GATEWAY_DEFAULT_LNG),
+      lat: toNumber(user.geofence?.lat, INITIAL_MAP_CENTER_LAT),
+      lng: toNumber(user.geofence?.lng, INITIAL_MAP_CENTER_LNG),
       radiusM: clamp(toNumber(user.geofence?.radiusM, 500), 20, 10000)
     };
   }
@@ -224,8 +224,8 @@ function ensureGateway(db, user, gatewayId = `gateway-${user.loginCode}`) {
     gateway = {
       id: gatewayId,
       userId: user.id,
-      lat: user.geofence?.lat || GATEWAY_DEFAULT_LAT,
-      lng: user.geofence?.lng || GATEWAY_DEFAULT_LNG,
+      lat: user.geofence?.lat || INITIAL_MAP_CENTER_LAT,
+      lng: user.geofence?.lng || INITIAL_MAP_CENTER_LNG,
       updatedAt: new Date().toISOString()
     };
     db.gateways.push(gateway);
@@ -237,8 +237,8 @@ function ensureGateway(db, user, gatewayId = `gateway-${user.loginCode}`) {
 function gatewayCoordinatesForUser(db, user) {
   const gateway = userGateway(db, user.id);
   return {
-    lat: toNumber(gateway?.lat, toNumber(user.geofence?.lat, GATEWAY_DEFAULT_LAT)),
-    lng: toNumber(gateway?.lng, toNumber(user.geofence?.lng, GATEWAY_DEFAULT_LNG))
+    lat: toNumber(gateway?.lat, toNumber(user.geofence?.lat, INITIAL_MAP_CENTER_LAT)),
+    lng: toNumber(gateway?.lng, toNumber(user.geofence?.lng, INITIAL_MAP_CENTER_LNG))
   };
 }
 
@@ -292,7 +292,6 @@ function normalizeIngest(body) {
     gatewayId,
     lat,
     lng,
-    battery: clamp(Math.round(toNumber(body.battery ?? body.bat, 0)), 0, 100),
     distanceM: toNumber(body.distanceM, NaN),
     gatewayLat,
     gatewayLng,
@@ -307,9 +306,6 @@ function normalizeIngest(body) {
 function smsMessageFor(alertType, deviceId, reading) {
   if (alertType === "geofence") {
     return `Cảnh báo! Bò ID ${deviceId} đã đi ra khỏi hàng rào an toàn`;
-  }
-  if (alertType === "battery") {
-    return `Cảnh báo! Bò ID ${deviceId} sắp hết pin (${reading.battery}%)`;
   }
   return `Cảnh báo! Bò ID ${deviceId} cần kiểm tra`;
 }
@@ -360,18 +356,6 @@ function evaluateAlerts(db, user, reading) {
     });
   }
 
-  if (reading.battery < 10) {
-    alerts.push({
-      id: crypto.randomUUID(),
-      userId: user.id,
-      deviceId: reading.deviceId,
-      type: "battery",
-      message: `Pin vòng cổ ${reading.deviceId} còn ${reading.battery}%`,
-      createdAt: now,
-      acknowledged: false
-    });
-  }
-
   for (const alert of alerts) {
     commands.push(queueGatewayCommand(db, user, reading, alert));
   }
@@ -398,7 +382,6 @@ function appendReading(db, owner, incoming) {
     gatewayId: incoming.gatewayId,
     lat: incoming.lat,
     lng: incoming.lng,
-    battery: incoming.battery,
     distanceM,
     gatewayLat: gateway.lat,
     gatewayLng: gateway.lng,
@@ -482,8 +465,8 @@ function registerDevice(db, body) {
       phone: "",
       devices: [],
       geofence: {
-        lat: GATEWAY_DEFAULT_LAT,
-        lng: GATEWAY_DEFAULT_LNG,
+        lat: INITIAL_MAP_CENTER_LAT,
+        lng: INITIAL_MAP_CENTER_LNG,
         radiusM: 500
       }
     };
@@ -618,8 +601,8 @@ async function handleApi(req, res, pathname) {
         phone: "",
         devices: [],
         geofence: {
-          lat: GATEWAY_DEFAULT_LAT,
-          lng: GATEWAY_DEFAULT_LNG,
+          lat: INITIAL_MAP_CENTER_LAT,
+          lng: INITIAL_MAP_CENTER_LNG,
           radiusM: 500
         }
       };

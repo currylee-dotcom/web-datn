@@ -23,6 +23,7 @@ const INVALID_COLLAR_ID_MESSAGE =
 const INVALID_FARM_CODE_MESSAGE = "Mã trang trại phải gồm 6 số";
 const COLLAR_MAC_PATTERN = /^[0-9A-F]{2}(:[0-9A-F]{2}){5}$/;
 const PREFER_FALLBACK_MAP = false;
+const INITIAL_MAP_CENTER = [21.0056, 105.8427];
 const MAP_FRAME_RADIUS_M = 320;
 const FENCE_STROKE_COLOR = "#f2c94c";
 const FENCE_FILL_COLOR = "rgba(242, 201, 76, 0.2)";
@@ -56,7 +57,6 @@ const els = {
   fallbackMap: document.getElementById("fallbackMap"),
   deviceSelect: document.getElementById("deviceSelect"),
   distanceValue: document.getElementById("distanceValue"),
-  batteryValue: document.getElementById("batteryValue"),
   rssiValue: document.getElementById("rssiValue"),
   updatedValue: document.getElementById("updatedValue"),
   radiusInput: document.getElementById("radiusInput"),
@@ -290,7 +290,7 @@ function ensureMap() {
   state.map = L.map("map", {
     zoomControl: false,
     attributionControl: true
-  }).setView([10.776889, 106.700806], 16);
+  }).setView(INITIAL_MAP_CENTER, 16);
   L.control.zoom({ position: "bottomright" }).addTo(state.map);
 
   state.mapTileLayer = L.tileLayer(
@@ -349,7 +349,6 @@ function updateHeader() {
 function updateMetrics() {
   const reading = selectedReading();
   els.distanceValue.textContent = reading ? formatDistance(reading.distanceM) : "--";
-  els.batteryValue.textContent = reading ? `${reading.battery}%` : "--";
   els.rssiValue.textContent = reading ? `${reading.rssi} dBm` : "--";
   els.updatedValue.textContent = reading ? formatTime(reading.createdAt) : "--";
 }
@@ -376,11 +375,11 @@ function updateFenceInputs() {
 }
 
 function gatewayCenter() {
-  const lat = Number(state.gateway?.lat ?? state.geofence?.lat ?? 10.776889);
-  const lng = Number(state.gateway?.lng ?? state.geofence?.lng ?? 106.700806);
+  const lat = Number(state.gateway?.lat ?? state.geofence?.lat ?? INITIAL_MAP_CENTER[0]);
+  const lng = Number(state.gateway?.lng ?? state.geofence?.lng ?? INITIAL_MAP_CENTER[1]);
   return [
-    Number.isFinite(lat) ? lat : 10.776889,
-    Number.isFinite(lng) ? lng : 106.700806
+    Number.isFinite(lat) ? lat : INITIAL_MAP_CENTER[0],
+    Number.isFinite(lng) ? lng : INITIAL_MAP_CENTER[1]
   ];
 }
 
@@ -509,7 +508,6 @@ function drawRealtime() {
       .bindPopup(
         `Vòng cổ: ${reading.deviceId}<br>` +
           `Khoảng cách: ${formatDistance(reading.distanceM)}<br>` +
-          `Pin: ${reading.battery}%<br>` +
           `Cập nhật: ${formatTime(reading.createdAt)}`
       )
       .addTo(cowGroup);
@@ -576,8 +574,7 @@ async function drawHistory() {
       .bindPopup(
         `Điểm ${index + 1}<br>` +
           `Thời gian: ${formatTime(point.createdAt)}<br>` +
-          `Khoảng cách: ${formatDistance(point.distanceM)}<br>` +
-          `Pin: ${point.battery}%`
+          `Khoảng cách: ${formatDistance(point.distanceM)}`
       )
       .addTo(group);
   });

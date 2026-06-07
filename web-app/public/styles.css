@@ -290,11 +290,6 @@ label {
   background: #fff8e8;
 }
 
-.alert-item.battery {
-  border-left-color: var(--danger);
-  background: var(--danger-soft);
-}
-
 .alert-item strong {
   display: block;
   font-size: 13px;

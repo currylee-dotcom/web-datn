@@ -1,7 +1,47 @@
 {
-  "users": [],
-  "gateways": [],
-  "readings": [],
+  "users": [
+    {
+      "id": "farm-654321",
+      "loginCode": "654321",
+      "name": "Trang trại 654321",
+      "phone": "",
+      "devices": [
+        "AA:11:22:33:44:55"
+      ],
+      "geofence": {
+        "lat": 10.776889,
+        "lng": 106.700806,
+        "radiusM": 180
+      }
+    }
+  ],
+  "gateways": [
+    {
+      "id": "gateway-654321",
+      "userId": "farm-654321",
+      "lat": 10.7769,
+      "lng": 106.7009,
+      "updatedAt": "2026-06-04T10:35:05.808Z"
+    }
+  ],
+  "readings": [
+    {
+      "id": "1357290e-1aaf-4d4e-b858-68b5caebd93e",
+      "userId": "farm-654321",
+      "deviceId": "AA:11:22:33:44:55",
+      "gatewayId": "gateway-654321",
+      "lat": 10.7778,
+      "lng": 106.7018,
+      "distanceM": 140.28540008975673,
+      "gatewayLat": 10.7769,
+      "gatewayLng": 106.7009,
+      "rssi": -81,
+      "snr": 8.3,
+      "seq": 1,
+      "fix": true,
+      "createdAt": "2026-06-04T10:35:05.808Z"
+    }
+  ],
   "alerts": [],
   "gatewayCommands": []
 }
