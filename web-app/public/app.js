@@ -38,6 +38,7 @@ const els = {
   registerFarmCode: document.getElementById("registerFarmCode"),
   collarId: document.getElementById("collarId"),
   collarIdError: document.getElementById("collarIdError"),
+  registerPhone: document.getElementById("registerPhone"),
   generateCodeBtn: document.getElementById("generateCodeBtn"),
   registerMessage: document.getElementById("registerMessage"),
   loginForm: document.getElementById("loginForm"),
@@ -49,6 +50,14 @@ const els = {
   addMoreBtn: document.getElementById("addMoreBtn"),
   farmName: document.getElementById("farmName"),
   farmCodeLabel: document.getElementById("farmCodeLabel"),
+  phoneDisplay: document.getElementById("phoneDisplay"),
+  phoneText: document.getElementById("phoneText"),
+  editPhoneBtn: document.getElementById("editPhoneBtn"),
+  phoneForm: document.getElementById("phoneForm"),
+  phoneInput: document.getElementById("phoneInput"),
+  savePhoneBtn: document.getElementById("savePhoneBtn"),
+  cancelPhoneBtn: document.getElementById("cancelPhoneBtn"),
+  phoneMessage: document.getElementById("phoneMessage"),
   refreshBtn: document.getElementById("refreshBtn"),
   logoutBtn: document.getElementById("logoutBtn"),
   realtimeTab: document.getElementById("realtimeTab"),
@@ -59,6 +68,7 @@ const els = {
   distanceValue: document.getElementById("distanceValue"),
   rssiValue: document.getElementById("rssiValue"),
   updatedValue: document.getElementById("updatedValue"),
+  batteryValue: document.getElementById("batteryValue"),
   radiusInput: document.getElementById("radiusInput"),
   radiusNumber: document.getElementById("radiusNumber"),
   saveFenceBtn: document.getElementById("saveFenceBtn"),
@@ -90,6 +100,10 @@ function digitsOnly(value) {
 
 function normalizeDevice(value) {
   return String(value || "").trim().toUpperCase();
+}
+
+function normalizePhone(value) {
+  return String(value || "").trim();
 }
 
 function messageFor(error) {
@@ -128,6 +142,8 @@ function showEntry(mode = "register", message = "") {
 function showApp() {
   els.entryView.hidden = true;
   els.appView.hidden = false;
+  els.phoneForm.hidden = true;
+  els.phoneDisplay.hidden = false;
   invalidateMapSize(50);
 }
 
@@ -164,6 +180,11 @@ function formatTime(iso) {
     day: "2-digit",
     month: "2-digit"
   }).format(new Date(iso));
+}
+
+function formatBattery(value) {
+  const battery = Number(value);
+  return Number.isFinite(battery) ? `${battery}%` : "--";
 }
 
 function escapeHtml(value) {
@@ -344,6 +365,27 @@ function updateHeader() {
   if (!state.user) return;
   els.farmName.textContent = state.user.name || `Trang trại ${state.user.loginCode}`;
   els.farmCodeLabel.textContent = state.user.loginCode;
+  updatePhoneDisplay();
+}
+
+function updatePhoneDisplay() {
+  const phone = normalizePhone(state.user?.phone);
+  els.phoneText.textContent = `Số điện thoại: ${phone || "Chưa thiết lập"}`;
+}
+
+function showPhoneEditor() {
+  els.phoneInput.value = normalizePhone(state.user?.phone);
+  els.phoneMessage.textContent = "";
+  els.phoneDisplay.hidden = true;
+  els.phoneForm.hidden = false;
+  setTimeout(() => els.phoneInput.focus(), 0);
+}
+
+function hidePhoneEditor() {
+  els.phoneForm.hidden = true;
+  els.phoneDisplay.hidden = false;
+  els.phoneMessage.textContent = "";
+  updatePhoneDisplay();
 }
 
 function updateMetrics() {
@@ -351,6 +393,7 @@ function updateMetrics() {
   els.distanceValue.textContent = reading ? formatDistance(reading.distanceM) : "--";
   els.rssiValue.textContent = reading ? `${reading.rssi} dBm` : "--";
   els.updatedValue.textContent = reading ? formatTime(reading.createdAt) : "--";
+  els.batteryValue.textContent = reading ? formatBattery(reading.battery) : "--";
 }
 
 function syncDeviceSelect() {
@@ -881,9 +924,10 @@ els.registerForm.addEventListener("submit", async (event) => {
   }
   els.registerMessage.textContent = "Đang lưu...";
   try {
+    const phone = normalizePhone(els.registerPhone.value);
     const data = await api("/api/register-device", {
       method: "POST",
-      body: JSON.stringify({ farmCode, collarId, registrationToken: state.registrationToken })
+      body: JSON.stringify({ farmCode, collarId, phone, registrationToken: state.registrationToken })
     });
     els.registerMessage.textContent = "";
     showRegisterSuccess(data);
@@ -923,6 +967,25 @@ els.loginForm.addEventListener("submit", async (event) => {
     await loginWithCode(els.loginCode.value);
   } catch (err) {
     showEntry("login", err.message || "Mã trang trại không hợp lệ");
+  }
+});
+
+els.editPhoneBtn.addEventListener("click", showPhoneEditor);
+els.cancelPhoneBtn.addEventListener("click", hidePhoneEditor);
+
+els.phoneForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  els.phoneMessage.textContent = "Đang lưu...";
+  try {
+    const data = await api("/api/phone", {
+      method: "PUT",
+      body: JSON.stringify({ phone: normalizePhone(els.phoneInput.value) })
+    });
+    state.user = data.user;
+    updateHeader();
+    hidePhoneEditor();
+  } catch (err) {
+    els.phoneMessage.textContent = messageFor(err);
   }
 });
 

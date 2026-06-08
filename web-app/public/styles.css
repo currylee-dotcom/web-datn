@@ -210,6 +210,43 @@ label {
   gap: 10px;
 }
 
+.phone-summary {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.phone-summary p {
+  margin: 0;
+  color: var(--soil-soft);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.phone-summary button,
+.phone-actions button {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.phone-form {
+  display: grid;
+  max-width: 340px;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.phone-form label {
+  margin-bottom: 0;
+}
+
+.phone-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .content-grid {
   display: grid;
   grid-template-columns: 360px 1fr;

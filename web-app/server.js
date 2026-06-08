@@ -173,6 +173,10 @@ function normalizeDeviceId(value) {
   return String(value || "").trim().toUpperCase();
 }
 
+function normalizePhone(value) {
+  return String(value || "").trim();
+}
+
 function validateFarmCode(code) {
   return /^\d{6}$/.test(code);
 }
@@ -287,6 +291,7 @@ function normalizeIngest(body) {
   const lng = toNumber(body.lng ?? body.longitude, NaN);
   const gatewayLat = toNumber(body.gatewayLat ?? body.gatewayLatitude, NaN);
   const gatewayLng = toNumber(body.gatewayLng ?? body.gatewayLongitude, NaN);
+  const battery = clamp(toNumber(body.battery ?? body.batteryPercent, NaN), 0, 100);
   return {
     deviceId,
     gatewayId,
@@ -298,6 +303,7 @@ function normalizeIngest(body) {
     rssi: toNumber(body.rssi, 0),
     snr: toNumber(body.snr, 0),
     seq: Math.max(0, Math.round(toNumber(body.seq, 0))),
+    battery,
     fix: body.fix !== false,
     createdAt: body.createdAt || new Date().toISOString()
   };
@@ -306,6 +312,9 @@ function normalizeIngest(body) {
 function smsMessageFor(alertType, deviceId, reading) {
   if (alertType === "geofence") {
     return `Cảnh báo! Bò ID ${deviceId} đã đi ra khỏi hàng rào an toàn`;
+  }
+  if (alertType === "low_battery") {
+    return `Cảnh báo! Vòng cổ bò ID ${deviceId} pin yếu (${reading.battery}%). Vui lòng kiểm tra thiết bị.`;
   }
   return `Cảnh báo! Bò ID ${deviceId} cần kiểm tra`;
 }
@@ -356,6 +365,18 @@ function evaluateAlerts(db, user, reading) {
     });
   }
 
+  if (reading.battery !== null && reading.battery <= 10) {
+    alerts.push({
+      id: crypto.randomUUID(),
+      userId: user.id,
+      deviceId: reading.deviceId,
+      type: "low_battery",
+      message: `Bò ${reading.deviceId} pin yếu: ${reading.battery}%`,
+      createdAt: now,
+      acknowledged: false
+    });
+  }
+
   for (const alert of alerts) {
     commands.push(queueGatewayCommand(db, user, reading, alert));
   }
@@ -388,6 +409,7 @@ function appendReading(db, owner, incoming) {
     rssi: incoming.rssi,
     snr: incoming.snr,
     seq: incoming.seq,
+    battery: Number.isFinite(incoming.battery) ? incoming.battery : null,
     fix: incoming.fix,
     createdAt: incoming.createdAt
   };
@@ -429,6 +451,7 @@ async function dispatchCommands(commands) {
 function registerDevice(db, body) {
   const loginCode = normalizeFarmCode(body.farmCode || body.loginCode || body.code);
   const deviceId = normalizeDeviceId(body.collarId || body.deviceId || body.macAddress || body.mac);
+  const phone = normalizePhone(body.phone);
   const registrationToken = String(body.registrationToken || "");
 
   if (!validateFarmCode(loginCode)) {
@@ -462,7 +485,7 @@ function registerDevice(db, body) {
       id: `farm-${loginCode}`,
       loginCode,
       name: `Trang trại ${loginCode}`,
-      phone: "",
+      phone,
       devices: [],
       geofence: {
         lat: INITIAL_MAP_CENTER_LAT,
@@ -488,6 +511,9 @@ function registerDevice(db, body) {
 
   if (!user.devices.includes(deviceId)) {
     user.devices.push(deviceId);
+  }
+  if (phone) {
+    user.phone = phone;
   }
   ensureGateway(db, user);
   const token = validRegistrationToken(loginCode, registrationToken)
@@ -666,6 +692,13 @@ async function handleApi(req, res, pathname) {
 
   if (req.method === "GET" && pathname === "/api/me") {
     return sendJson(res, 200, { user: publicUser(user), gateway: userGateway(db, user.id) });
+  }
+
+  if (req.method === "PUT" && pathname === "/api/phone") {
+    const body = await readBody(req);
+    user.phone = normalizePhone(body.phone);
+    writeDb(db);
+    return sendJson(res, 200, { ok: true, user: publicUser(user) });
   }
 
   if (req.method === "GET" && pathname === "/api/latest") {

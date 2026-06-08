@@ -1,0 +1,7 @@
+node_modules/
+.env
+.env.*
+npm-debug.log*
+
+# Runtime persistence. The app creates this file automatically when missing.
+data/*.json

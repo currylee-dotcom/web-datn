@@ -55,6 +55,14 @@
             />
             <p id="collarIdError" class="field-error" aria-live="polite" hidden></p>
 
+            <label for="registerPhone">Số điện thoại nhận cảnh báo</label>
+            <input
+              id="registerPhone"
+              name="phone"
+              placeholder="VD: 0987654321"
+              autocomplete="tel"
+            />
+
             <button type="submit">Lưu</button>
             <p id="registerMessage" class="status-line" aria-live="polite"></p>
           </form>
@@ -82,6 +90,19 @@
           <div>
             <p class="eyebrow">Mã trang trại <span id="farmCodeLabel">------</span></p>
             <h1 id="farmName">Giám sát gia súc</h1>
+            <div id="phoneDisplay" class="phone-summary">
+              <p id="phoneText">Số điện thoại: Chưa thiết lập</p>
+              <button id="editPhoneBtn" class="ghost" type="button">Đổi số điện thoại</button>
+            </div>
+            <form id="phoneForm" class="phone-form" hidden>
+              <label for="phoneInput">Số điện thoại</label>
+              <input id="phoneInput" type="tel" placeholder="VD: 0987654321" autocomplete="tel" />
+              <div class="phone-actions">
+                <button id="savePhoneBtn" type="submit">Lưu số điện thoại</button>
+                <button id="cancelPhoneBtn" class="ghost" type="button">Hủy</button>
+              </div>
+              <p id="phoneMessage" class="status-line" aria-live="polite"></p>
+            </form>
           </div>
           <div class="top-actions">
             <button id="refreshBtn" type="button">Làm mới</button>
@@ -111,6 +132,10 @@
                 <div>
                   <dt>Cập nhật</dt>
                   <dd id="updatedValue">--</dd>
+                </div>
+                <div>
+                  <dt>Pin</dt>
+                  <dd id="batteryValue">--</dd>
                 </div>
               </dl>
             </section>
